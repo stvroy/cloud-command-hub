@@ -1,35 +1,30 @@
-/* ── TOKENS ──────────────────────────────────────────── */
-:root {
-  /* Living Goods blue palette */
+/* ── TOKENS — DARK (default) ─────────────────────────── */
+:root,
+[data-theme="dark"] {
   --brand:        #0057b8;
   --brand-dark:   #003d82;
   --brand-deeper: #002a5e;
   --brand-light:  #1a6fcf;
   --brand-glow:   rgba(0, 87, 184, 0.35);
 
-  /* Sidebar */
   --sb-bg:        #001e4a;
   --sb-border:    rgba(255,255,255,0.06);
   --sb-hover:     rgba(255,255,255,0.05);
   --sb-active:    rgba(79,195,247,0.12);
   --sb-w:         240px;
 
-  /* Main bg */
   --bg:           #030d1f;
   --bg2:          #071428;
   --bg3:          #0a1c38;
   --bg4:          #0d2347;
 
-  /* Cards */
   --card-bg:      rgba(10, 28, 56, 0.9);
   --card-border:  rgba(79, 195, 247, 0.1);
 
-  /* Text */
   --t1: #e8f4fd;
   --t2: #7fb3d3;
   --t3: #3d6b8a;
 
-  /* Semantic */
   --ok:   #4ade80; --ok-bg:   rgba(74,222,128,0.1);
   --warn: #fbbf24; --warn-bg: rgba(251,191,36,0.1);
   --crit: #f87171; --crit-bg: rgba(248,113,113,0.1);
@@ -38,7 +33,91 @@
   --radius:    8px;
   --radius-lg: 14px;
   --shadow:    0 4px 24px rgba(0,0,0,0.4);
+
+  --topbar-border: rgba(79,195,247,0.08);
+  --input-scheme:  dark;
 }
+
+/* ── TOKENS — LIGHT ──────────────────────────────────── */
+[data-theme="light"] {
+  --brand:        #0057b8;
+  --brand-dark:   #003d82;
+  --brand-deeper: #1a6fcf;
+  --brand-light:  #2979d9;
+  --brand-glow:   rgba(0, 87, 184, 0.15);
+
+  --sb-bg:        #0d2b6b;
+  --sb-border:    rgba(255,255,255,0.1);
+  --sb-hover:     rgba(255,255,255,0.08);
+  --sb-active:    rgba(79,195,247,0.18);
+  --sb-w:         240px;
+
+  --bg:           #f0f4f8;
+  --bg2:          #ffffff;
+  --bg3:          #e4ecf5;
+  --bg4:          #d6e4f0;
+
+  --card-bg:      rgba(255,255,255,0.95);
+  --card-border:  rgba(0, 87, 184, 0.12);
+
+  --t1: #0d1f3c;
+  --t2: #2c5282;
+  --t3: #718096;
+
+  --ok:   #16a34a; --ok-bg:   rgba(22,163,74,0.08);
+  --warn: #d97706; --warn-bg: rgba(217,119,6,0.08);
+  --crit: #dc2626; --crit-bg: rgba(220,38,38,0.08);
+  --info: #0057b8; --info-bg: rgba(0,87,184,0.08);
+
+  --radius:    8px;
+  --radius-lg: 14px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.1);
+
+  --topbar-border: rgba(0,87,184,0.1);
+  --input-scheme:  light;
+}
+
+/* light-mode overrides for elements with hardcoded dark colours */
+[data-theme="light"] .topbar {
+  border-bottom-color: var(--topbar-border);
+}
+[data-theme="light"] .report-month-input {
+  color-scheme: light;
+}
+[data-theme="light"] .sidebar {
+  box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+}
+[data-theme="light"] .demo-footer {
+  background: rgba(224,234,246,0.9);
+  border-top-color: rgba(0,87,184,0.12);
+}
+[data-theme="light"] .ns-modal {
+  background: #fff;
+  border-color: rgba(0,87,184,0.15);
+}
+[data-theme="light"] .dt thead th {
+  background: var(--bg3);
+  color: var(--t2);
+}
+[data-theme="light"] .dt tbody tr:hover td {
+  background: var(--bg3);
+}
+
+/* ── THEME TOGGLE BUTTON ─────────────────────────────── */
+.theme-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--card-border);
+  border-radius: 99px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: inherit; font-size: 11.5px;
+  color: var(--t2);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.theme-toggle:hover { background: var(--bg4); color: var(--t1); }
+.theme-toggle-icon { font-size: 13px; line-height: 1; }
 
 /* ── RESET ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -152,7 +231,7 @@ body {
   padding: 0 28px;
   height: 60px;
   background: var(--bg2);
-  border-bottom: 1px solid rgba(79,195,247,0.08);
+  border-bottom: 1px solid var(--topbar-border, rgba(79,195,247,0.08));
   position: sticky; top: 0; z-index: 100;
   flex-shrink: 0;
 }

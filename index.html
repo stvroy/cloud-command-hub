@@ -10,6 +10,13 @@
 <link rel="icon" type="image/svg+xml" href="./favicon.svg"/>
 <link rel="icon" type="image/x-icon" href="./favicon.ico"/>
 <link rel="stylesheet" href="./style.css"/>
+<script>
+  // Apply saved theme before first paint — prevents flash
+  (function(){
+    var t = localStorage.getItem('cch-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 </head>
 <body>
 
@@ -105,6 +112,10 @@
         <input type="month" id="report-month" class="report-month-input" />
         <button id="report-dl-btn" class="btn-sm" onclick="downloadMonthlyReport()">↓ Monthly Report</button>
       </div>
+      <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Switch theme">
+        <span class="theme-toggle-icon" id="theme-toggle-icon">☀️</span>
+        <span id="theme-toggle-label">Light</span>
+      </button>
       <div class="region-pill" style="background:rgba(255,167,38,0.12);border-color:rgba(255,167,38,0.3);color:#ffb74d;cursor:default" title="Demo mode — static mock data, no live backend">Demo</div>
       <div class="region-pill"><span class="rpulse"></span><span id="aws-region-label">us-east-1</span></div>
       <div class="clock" id="clock"></div>
@@ -1336,6 +1347,34 @@
 <script src="./xlsx.bundle.js"></script>
 <script src="./dashboard.js"></script>
 <script>
+  // ── THEME TOGGLE ───────────────────────────────────────
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('cch-theme', next);
+    updateThemeToggleUI(next);
+  }
+
+  function updateThemeToggleUI(theme) {
+    const icon  = document.getElementById('theme-toggle-icon');
+    const label = document.getElementById('theme-toggle-label');
+    if (!icon || !label) return;
+    if (theme === 'light') {
+      icon.textContent  = '🌙';
+      label.textContent = 'Dark';
+    } else {
+      icon.textContent  = '☀️';
+      label.textContent = 'Light';
+    }
+  }
+
+  // Sync UI on load
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('cch-theme') || 'dark';
+    updateThemeToggleUI(saved);
+  });
+
   // Override post-load: disable actions that require a live backend
   window.addEventListener('load', () => {
     window.doLogout = () => alert('Sign out is not available in demo mode.');
