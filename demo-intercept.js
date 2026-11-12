@@ -332,36 +332,189 @@
     collected_at: NOW,
   };
 
-  /* ── ALB / Network (empty — shows "No data" gracefully) ── */
-  MOCK.metrics.alb         = { load_balancers: [], total: 0 };
-  MOCK.metrics.ec2_network = {};
-  MOCK.metrics.telemetry   = null;
-  MOCK.metrics.ngsa_fhir   = {};
+  /* ── ALB ── */
+  MOCK.metrics.alb = {
+    healthy: 2, degraded: 1, critical: 0,
+    summary: { total_requests_5min: 24830, overall_error_rate: 0.4 },
+    total: 3,
+    load_balancers: [
+      {
+        name: 'app/prod-web-alb/a1b2c3d4e5f60001',
+        friendly_name: 'prod-web-alb',
+        status: 'healthy',
+        metrics: { requests_per_min: 1247, error_rate_pct: 0.2, '5xx_count': 3, p50_latency_ms: 94, p99_latency_ms: 342 },
+        targets: { healthy: 4, unhealthy: 0 },
+      },
+      {
+        name: 'app/prod-api-alb/b2c3d4e5f6700002',
+        friendly_name: 'prod-api-alb',
+        status: 'healthy',
+        metrics: { requests_per_min: 3614, error_rate_pct: 0.3, '5xx_count': 11, p50_latency_ms: 128, p99_latency_ms: 587 },
+        targets: { healthy: 6, unhealthy: 0 },
+      },
+      {
+        name: 'app/staging-alb/c3d4e5f678900003',
+        friendly_name: 'staging-alb',
+        status: 'degraded',
+        metrics: { requests_per_min: 243, error_rate_pct: 1.8, '5xx_count': 5, p50_latency_ms: 213, p99_latency_ms: 1247 },
+        targets: { healthy: 3, unhealthy: 1 },
+      },
+    ],
+  };
+
+  /* ── EC2 Network ── */
+  MOCK.metrics.ec2_network = {
+    summary: { total_out_mb: 2847.3, total_in_mb: 1234.5 },
+    instances: [
+      { name:'prod-web-01',      id:'i-0a1b2c3d4e5f0001', type:'t3.medium',  network:{ in_mb:182.4, out_mb:341.2, in_mbps:0.5, out_mbps:0.9, packets_in:234891, packets_out:189234, outbound_alert:false } },
+      { name:'prod-web-02',      id:'i-0a1b2c3d4e5f0002', type:'t3.medium',  network:{ in_mb:176.1, out_mb:328.7, in_mbps:0.5, out_mbps:0.9, packets_in:228412, packets_out:184231, outbound_alert:false } },
+      { name:'prod-api-01',      id:'i-0a1b2c3d4e5f0003', type:'t3.large',   network:{ in_mb:412.8, out_mb:623.4, in_mbps:1.1, out_mbps:1.7, packets_in:487231, packets_out:412841, outbound_alert:false } },
+      { name:'prod-api-02',      id:'i-0a1b2c3d4e5f0004', type:'t3.large',   network:{ in_mb:398.3, out_mb:589.1, in_mbps:1.1, out_mbps:1.6, packets_in:471823, packets_out:398421, outbound_alert:false } },
+      { name:'prod-api-03',      id:'i-0a1b2c3d4e5f0005', type:'t3.large',   network:{ in_mb:378.9, out_mb:571.2, in_mbps:1.0, out_mbps:1.6, packets_in:461234, packets_out:389120, outbound_alert:false } },
+      { name:'prod-worker-01',   id:'i-0a1b2c3d4e5f0006', type:'t3.medium',  network:{ in_mb:89.3,  out_mb:924.8, in_mbps:0.2, out_mbps:2.6, packets_in:98421,  packets_out:921834, outbound_alert:true  } },
+      { name:'prod-eks-node-01', id:'i-0a1b2c3d4e5f0007', type:'m5.xlarge',  network:{ in_mb:734.2, out_mb:891.3, in_mbps:2.0, out_mbps:2.5, packets_in:812341, packets_out:734821, outbound_alert:false } },
+      { name:'prod-eks-node-02', id:'i-0a1b2c3d4e5f0008', type:'m5.xlarge',  network:{ in_mb:712.8, out_mb:854.1, in_mbps:2.0, out_mbps:2.4, packets_in:798234, packets_out:712341, outbound_alert:false } },
+      { name:'prod-db-replica',  id:'i-0a1b2c3d4e5f0009', type:'r5.large',   network:{ in_mb:234.7, out_mb:198.4, in_mbps:0.7, out_mbps:0.6, packets_in:312841, packets_out:289234, outbound_alert:false } },
+      { name:'stg-api-01',       id:'i-0b2c3d4e5f600011', type:'t3.small',   network:{ in_mb:67.2,  out_mb:89.4,  in_mbps:0.2, out_mbps:0.2, packets_in:78234,  packets_out:67821,  outbound_alert:false } },
+      { name:'stg-api-02',       id:'i-0b2c3d4e5f600012', type:'t3.small',   network:{ in_mb:72.1,  out_mb:94.3,  in_mbps:0.2, out_mbps:0.3, packets_in:82341,  packets_out:71234,  outbound_alert:false } },
+      { name:'stg-worker-01',    id:'i-0b2c3d4e5f600013', type:'t3.small',   network:{ in_mb:34.8,  out_mb:189.7, in_mbps:0.1, out_mbps:0.5, packets_in:42341,  packets_out:198234, outbound_alert:false } },
+    ],
+  };
+
+  MOCK.metrics.telemetry = null;
+  MOCK.metrics.ngsa_fhir = {};
+
+  /* ── Container Health ── */
+  MOCK.container_health = {
+    configured: true,
+    hosts: [
+      {
+        host: 'prod-web-01 (10.0.1.11)',
+        containers: [
+          { name:'nginx',          image:'nginx:1.25-alpine',               state:'running', exit_code:null, cpu_pct:1.2,  mem_mb:24.3,  mem_pct:0.3, status:'Up 14 days' },
+          { name:'app',            image:'ghcr.io/cloudcmd/app:v2.4.1',     state:'running', exit_code:null, cpu_pct:18.4, mem_mb:312.5, mem_pct:3.8, status:'Up 14 days' },
+          { name:'redis-sentinel', image:'redis:7-alpine',                   state:'running', exit_code:null, cpu_pct:0.4,  mem_mb:12.1,  mem_pct:0.1, status:'Up 14 days' },
+          { name:'log-forwarder',  image:'grafana/promtail:2.9.3',           state:'running', exit_code:null, cpu_pct:0.8,  mem_mb:48.2,  mem_pct:0.6, status:'Up 14 days' },
+        ],
+      },
+      {
+        host: 'prod-worker-01 (10.0.1.16)',
+        containers: [
+          { name:'celery-worker',  image:'ghcr.io/cloudcmd/app:v2.4.1',     state:'running', exit_code:null, cpu_pct:67.3, mem_mb:489.1, mem_pct:6.0, status:'Up 14 days' },
+          { name:'celery-beat',    image:'ghcr.io/cloudcmd/app:v2.4.1',     state:'running', exit_code:null, cpu_pct:2.1,  mem_mb:187.3, mem_pct:2.3, status:'Up 14 days' },
+          { name:'flower',         image:'mher/flower:2.0.1',               state:'running', exit_code:null, cpu_pct:0.3,  mem_mb:62.4,  mem_pct:0.8, status:'Up 8 days' },
+          { name:'log-forwarder',  image:'grafana/promtail:2.9.3',           state:'running', exit_code:null, cpu_pct:0.9,  mem_mb:51.2,  mem_pct:0.6, status:'Up 14 days' },
+        ],
+      },
+      {
+        host: 'stg-api-01 (10.1.0.11)',
+        containers: [
+          { name:'api',            image:'ghcr.io/cloudcmd/app:v2.4.0',     state:'running', exit_code:null,  cpu_pct:28.4, mem_mb:234.1, mem_pct:5.8, status:'Up 3 days' },
+          { name:'postgres-proxy', image:'pgbouncer/pgbouncer:1.21.0',      state:'exited',  exit_code:1,     cpu_pct:null, mem_mb:null,  mem_pct:null, status:'Exited (1) 2 hours ago' },
+          { name:'log-forwarder',  image:'grafana/promtail:2.9.3',           state:'running', exit_code:null,  cpu_pct:0.6,  mem_mb:42.3,  mem_pct:1.0, status:'Up 3 days' },
+        ],
+      },
+    ],
+  };
+
+  /* ── Instance Control (staging/dev instances) ── */
+  MOCK.instances = [
+    { id:'i-0b2c3d4e5f600011', name:'stg-api-01',    type:'t3.small', state:'running', environment:'staging', account_name:'staging', region:'us-west-2', last_action:{ action:'start', user:'s.roy',     ts:'2026-11-10T08:14:22Z' } },
+    { id:'i-0b2c3d4e5f600012', name:'stg-api-02',    type:'t3.small', state:'running', environment:'staging', account_name:'staging', region:'us-west-2', last_action:{ action:'start', user:'ci-runner', ts:'2026-11-10T08:14:48Z' } },
+    { id:'i-0b2c3d4e5f600013', name:'stg-worker-01', type:'t3.small', state:'running', environment:'staging', account_name:'staging', region:'us-west-2', last_action:null },
+    { id:'i-0b2c3d4e5f600014', name:'stg-dev-01',    type:'t3.micro', state:'stopped', environment:'staging', account_name:'staging', region:'us-west-2', last_action:{ action:'stop',  user:'s.roy',     ts:'2026-11-11T18:30:05Z' } },
+  ];
+
+  /* ── Incidents ── */
+  const _openIncidents = [
+    {
+      id: 1, status: 'open',
+      first_seen: new Date(Date.now() - 2 * 3600000).toISOString(),
+      source: 'eks-pods', namespace: 'kube-system', pod: 'coredns-7d6b4b5c9f-xt9zq',
+      message: 'CrashLoopBackOff: coredns-7d6b4b5c9f-xt9zq — Exit code 2 (config parse error)',
+      full_log: 'Error: failed to load Corefile: unknown directive "erros" on line 7\nparsing failed: unknown directive',
+    },
+    {
+      id: 2, status: 'open',
+      first_seen: new Date(Date.now() - 45 * 60000).toISOString(),
+      source: 'uptime-kuma', namespace: null, pod: null,
+      message: 'File Storage DOWN — https://files.example.com timed out after 30s',
+      full_log: 'GET https://files.example.com/health → connection timeout (30000ms)\nRetries: 3/3 failed. Service marked DOWN.',
+    },
+  ];
+  const _resolvedIncidents = [
+    {
+      id: 3, status: 'resolved',
+      first_seen: new Date(Date.now() - 2 * 86400000).toISOString(),
+      resolved_at: new Date(Date.now() - 2 * 86400000 + 1200000).toISOString(),
+      source: 'cloudtrail', namespace: null, pod: null,
+      message: 'IAM key rotation violation: legacy-svc access key age exceeded 90 days (127 days)',
+      resolved_by: 's.roy', resolution_note: 'Key rotated and new secret stored in AWS Secrets Manager.',
+    },
+    {
+      id: 4, status: 'resolved',
+      first_seen: new Date(Date.now() - 4 * 86400000).toISOString(),
+      resolved_at: new Date(Date.now() - 4 * 86400000 + 3600000).toISOString(),
+      source: 'eks-pods', namespace: 'default', pod: 'api-deploy-6c8f9d-k4jpv',
+      message: 'OOMKilled: api-deploy-6c8f9d-k4jpv — memory limit exceeded (512Mi)',
+      resolved_by: 'ci-runner', resolution_note: 'Memory limit increased to 1Gi in Helm values and deployed.',
+    },
+    {
+      id: 5, status: 'resolved',
+      first_seen: new Date(Date.now() - 7 * 86400000).toISOString(),
+      resolved_at: new Date(Date.now() - 7 * 86400000 + 7200000).toISOString(),
+      source: 'uptime-kuma', namespace: null, pod: null,
+      message: 'Auth Service elevated latency — p99 > 2000ms for 15 minutes',
+      resolved_by: 's.roy', resolution_note: 'Traced to Redis connection pool exhaustion; pool size increased to 50.',
+    },
+  ];
+  MOCK.incidents_open = _openIncidents;
+  MOCK.incidents_all  = [..._openIncidents, ..._resolvedIncidents];
 
   /* ── Sync status (for App Performance section) ── */
   MOCK.sync_status = { configured: false, regions: [] };
 
   /* ── Log samples ── */
-  const LOG_SOURCES = ['auth','syslog','eks-pods','cloudtrail'];
-  MOCK.logs = Array.from({ length: 20 }, (_, i) => ({
+  const _logEntries = [
+    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2', msg:'GET /api/v2/users 200 OK [42ms] — 847 results returned' },
+    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'prometheus-0',             msg:'Scrape completed: 1,247 metrics ingested from 14 targets in 234ms' },
+    { sev:'error',   src:'eks-pods',    ns:'kube-system',   pod:'coredns-7d6b4b5c9f-xt9zq',msg:'ERROR failed to load Corefile: unknown directive "erros" on line 7 — CrashLoopBackOff' },
+    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'CloudTrail: s.roy assumed role arn:aws:iam::123456789012:role/AdminRole from 196.218.x.x' },
+    { sev:'info',    src:'eks-pods',    ns:'ingress-nginx', pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', msg:'Configuration reloaded — 12 Ingress rules active' },
+    { sev:'warning', src:'syslog',      ns:'default',       pod:'prod-worker-01',           msg:'WARNING: celery-worker memory usage at 78% (489 MB / 629 MB) — approaching limit' },
+    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'User s.roy authenticated via SSO (Google) — session granted for 8h' },
+    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2', msg:'Liveness probe OK: /health returned 200 in 3ms' },
+    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'S3 PutObject: prod-backups — daily snapshot uploaded (2.3 GB) by backup-agent' },
+    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'loki-0',                   msg:'Log retention policy applied: 847,231 entries older than 30d compacted to object storage' },
+    { sev:'error',   src:'eks-pods',    ns:'default',       pod:'stg-postgres-proxy-7f6b',  msg:'ERROR pgbouncer connection pool exhausted — max_client_conn=20 reached (exit 1)' },
+    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'EC2 DescribeInstances called by ci-runner from us-east-1 — 14 instances returned' },
+    { sev:'info',    src:'syslog',      ns:'default',       pod:'prod-web-01',              msg:'TLS certificate renewed for api.example.com — expires in 85 days' },
+    { sev:'warning', src:'cloudtrail',  ns:null,            pod:null,                       msg:'WARNING: IAM key age threshold exceeded for legacy-svc (127 days since last rotation)' },
+    { sev:'info',    src:'eks-pods',    ns:'monitoring',    pod:'grafana-7d4b9c8f6-p2qkj',  msg:'Dashboard "Infrastructure Overview" viewed by s.roy — 847 panel queries executed' },
+    { sev:'info',    src:'syslog',      ns:null,            pod:'prod-db-replica',          msg:'PostgreSQL streaming replication lag: 0.3s — WAL receiver connected to primary' },
+    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'API key ci-runner rotated successfully — new key stored in Secrets Manager' },
+    { sev:'info',    src:'eks-pods',    ns:'kube-system',   pod:'aws-node-tx9qz',           msg:'VPC CNI plugin: assigned 3 secondary IPs to node ip-10-0-1-100.ec2.internal' },
+    { sev:'warning', src:'syslog',      ns:'default',       pod:'prod-api-01',              msg:'WARNING: upstream response time exceeded 1s threshold — p99 latency 1,247ms (target: 500ms)' },
+    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'CloudWatch alarm OK: prod-worker-01 CPUUtilization returned below threshold (67% < 80%)' },
+    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-pq7x1',  msg:'Deployment rollout complete: api-deploy updated to v2.4.1 (3/3 replicas ready)' },
+    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'alertmanager-0',           msg:'Alert resolved: FilesServiceDown — service restored after 47 minutes' },
+    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'Cost Anomaly Detection: EC2 spend within normal range ($268/day, budget $300/day)' },
+    { sev:'error',   src:'syslog',      ns:'default',       pod:'stg-api-01',               msg:'ERROR upstream connect timeout: postgres-proxy connection refused (port 5432)' },
+    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'Admin panel: s.roy approved access request for stg-dev (read-only, 7-day expiry)' },
+    { sev:'info',    src:'eks-pods',    ns:'ingress-nginx', pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', msg:'Rate limit triggered: 429 returned to 54.203.x.x — 1,000 req/min exceeded' },
+    { sev:'info',    src:'syslog',      ns:null,            pod:'prod-eks-node-01',         msg:'Node heartbeat OK — kubelet reporting healthy, 25 pods scheduled, 0 evictions' },
+    { sev:'warning', src:'cloudtrail',  ns:null,            pod:null,                       msg:'WARNING: S3 bucket public-assets has public read ACL — review recommended' },
+    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2',  msg:'POST /api/v2/reports 202 Accepted — PPTX generation queued (job_id: rpt-2847)' },
+    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'prometheus-0',             msg:'TSDB compaction complete: 2.3M series retained, 847K expired entries removed' },
+  ];
+  MOCK.logs = _logEntries.map((e, i) => ({
     id: i,
-    ts: new Date(Date.now() - i * 180000).toISOString(),
-    severity: i === 2 ? 'error' : i === 5 ? 'warning' : 'info',
-    source: LOG_SOURCES[i % LOG_SOURCES.length],
-    namespace: i % 3 === 0 ? 'monitoring' : i % 3 === 1 ? 'default' : 'kube-system',
-    pod: `app-pod-${(i + 1).toString().padStart(4,'0')}`,
-    message: [
-      'Health check passed for /api/health',
-      'Connection established to database',
-      'ERROR: upstream timeout after 30s — retrying',
-      'Scheduled backup completed successfully',
-      'TLS certificate refreshed, expires in 85 days',
-      'WARNING: memory usage at 78%, approaching threshold',
-      'User authenticated via SSO',
-      'Kubernetes pod restarted: crashloopbackoff resolved',
-      'CloudTrail: IAM policy change detected',
-      'S3 lifecycle rule applied: 1,247 objects transitioned to Glacier',
-    ][i % 10],
+    ts: new Date(Date.now() - i * 95000).toISOString(),
+    severity: e.sev,
+    source: e.src,
+    namespace: e.ns || 'default',
+    pod: e.pod || `svc-${(i + 1).toString().padStart(4,'0')}`,
+    message: e.msg,
   }));
 
   /* ── FETCH INTERCEPTOR ───────────────────────────────────────────────── */
@@ -373,11 +526,17 @@
     if (path === '/auth/logout')            return _mockResp({ ok: true });
     if (path === '/api/metrics')            return _mockResp({ metrics: MOCK.metrics });
     if (path.startsWith('/api/logs'))       return _mockResp({ logs: MOCK.logs, total: MOCK.logs.length });
-    if (path.startsWith('/api/incidents'))  return _mockResp([]);
+    if (path.startsWith('/api/incidents')) {
+      const qs = (typeof url === 'string' ? url : url?.url || '').split('?')[1] || '';
+      const status = new URLSearchParams(qs).get('status');
+      const list = status === 'open' ? MOCK.incidents_open : MOCK.incidents_all;
+      return _mockResp({ incidents: list });
+    }
     if (path === '/api/sync-status')        return _mockResp(MOCK.sync_status);
     if (path === '/api/sync-history')       return _mockResp({ months: [] });
-    if (path === '/api/container-health')   return _mockResp({ configured: false, hosts: [] });
-    if (path.startsWith('/api/instances'))  return _mockResp([]);
+    if (path === '/api/container-health')   return _mockResp(MOCK.container_health);
+    if (path === '/api/instances')          return _mockResp({ instances: MOCK.instances });
+    if (path.startsWith('/api/instances/')) return _mockResp({ ok: true });
     if (path.startsWith('/api/eks/nodes/live')) return _mockResp({ nodes: MOCK.metrics.eks.nodes });
     if (path.startsWith('/api/ec2/instance-metrics')) return _mockResp({ cpu: _spark(45, 15, 20), mem: _spark(60, 10, 20), disk: _spark(42, 5, 20), source: 'demo' });
     if (path.startsWith('/admin/'))         return _mockResp({ users: [], pending: [] });
