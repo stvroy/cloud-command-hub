@@ -265,7 +265,7 @@
     },
     s3: {
       buckets, total: buckets.length,
-      public_count: buckets.filter(b => b.is_public).length,
+      public: buckets.filter(b => b.is_public).length,
       total_gib: Math.round(buckets.reduce((s,b) => s + b.size_gib, 0) * 10) / 10,
     },
     collected_at: NOW,
@@ -319,6 +319,7 @@
   MOCK.metrics.guardduty = {
     security_score: 71,
     total: 7, high: 2, medium: 3, low: 2,
+    summary: { total: 7, high: 2, medium: 3, low: 2 },
     findings: [
       {
         title:         'SSH Brute Force Attack on EC2 Instance',
