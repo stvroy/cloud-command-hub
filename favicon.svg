@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="gDev" x1="1" y1="0" x2="0.3" y2="1">
+      <stop offset="0%"   stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="gOps" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0%"   stop-color="#fdba74"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <!-- clip so loops stay inside the tile -->
+    <clipPath id="tile">
+      <rect width="64" height="64" rx="10"/>
+    </clipPath>
+  </defs>
+
+  <!-- background -->
+  <rect width="64" height="64" rx="10" fill="#0d1117"/>
+
+  <g clip-path="url(#tile)">
+    <!-- left lobe (Ops/orange) — drawn first, goes "behind" at crossing -->
+    <path d="M32,32 C28,14 6,20 6,32 C6,44 28,50 32,32"
+          fill="none" stroke="url(#gOps)" stroke-width="4.5"
+          stroke-linecap="round"/>
+
+    <!-- right lobe (Dev/blue) — drawn second, sits "over" left at crossing -->
+    <path d="M32,32 C36,14 58,20 58,32 C58,44 36,50 32,32"
+          fill="none" stroke="url(#gDev)" stroke-width="4.5"
+          stroke-linecap="round"/>
+  </g>
+
+  <!-- LG figure — centred, sized to fill the ∞ waist -->
+  <image href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEc0lEQVR4nOWWTWxUVRTHf/e++6YtIgoS0S6KhrIxcaEYY1yIiaYS2k4bwnSBSpREEkw0UVkUUvrmTYsRCRbTxJiS+BUwwosRSktY6ALU+ElRSdBIjAbDRkGi9nPefe+ad6cWkGlnpsKK/2Ym5953/uf7HrgmsOLVKowRxY7kVaRNCAUt3o24f9UihCl2SV09/oRPGLSzuPDfyoSVXcEIiBmPMjtqEDQgojPT3ZIz6y+eNwvPk9Yz+1vsDEN+dC1S3MSAf5ZMxvmv9yU8mC08iQd8x0K0ExBGGzjsn7Ry/LiyGmjMLeOe6Di+n1huLjLa0JJ9HJxWIj5D/9bL4d4JG7FMIPDbIpq7NkL8iyVPOkCIy8gTFE9BZp9TOBWPMKTaLWEiK8gNzbk2ZOodVNUqUqntuDevs/fX9ymCtoiWrQ/h8BQOb1h5NjttpFVRadBWsDY2AY4YIp39naBtF8vWu4kUyQocF8LxYdzqOQixHMzr9ImQtFeLMG8Bxzgff2qj4hdvwekjMNlDDHaewvAeqrqPdNeTHOsL7ZmJPyIKNak5czGxRHDUFliTtxDULqRaRKxzHPE1nvW+YgPA8wqDJGV2YqJzOKqPlq5uO9X6s3vQUTNhfhsTo49yoOM1Grx6HLWP6utWEuV30O8ftd3gX154FXSBKQyOJn8jrrsd6YDOH8GYV3DkV/wRjnF9zTykfhjMJqrn1pMf/gJXNhNsPluI4/ThL8OAqZ6GIdWJcjycFIRjBsxpEMMg5iOdWtwUTIydQo9nGOz+dqpbSkCUNOBiRa1dz4N4FsddbItwslTQExDpzwn1Bg7535QT+koMuPieYVVuKdpZiYzvxZgFGHmGKD6KiA7ZiVcBeaUQLPcubdvkpWtsn3+JI8VG84xKy8OFNDRvWoSseQzEfRhzC4I5IMaALxnRO/nQP31lU2DsGDVW6ZCzFik7UGoJUoFI3iMDsS7cjfQpdH4dA/4n5RahLGlgQp6E/rjTi1Jv4lYtwcQwMfoT4yPvE45+TJiPiCNwnKU4ag+NuaWWvIx0yBnJMxlpx+889TKpmqetT+H4EGH0BFXn76R/y2r26wcxppUo+pFIg5uqQ4kOqyGb/R8R8DxBEEQsql2NUs+h8zE63IYYaeDglrcJepK8JyyGg50DCLOaOP6V2KZ+DemuB6ZSNwsDhC2iJq/OvnbIP9H6Gfq9dva/dG6yGybrR2CjdKDzBIJ24lijqhSYwgs5C4gp5c253bRuHaMxt3IyKrKwWBSB3XjsN3209RjS3V/T4C248F25EchkCutUU/fdSHk/sV7DYOchuwvY1irRXsLZycTweYSpx41vL+WtvEwSBAmBQMQtRHoT/d4H1rtk0ZgJSb0k9/o3fw/mXVTVDTiqzp6dPCnKNUBY79PercScYCC713qeKC8HwR3Gvp6h2E4U/g3iNmaFzI6aklvxdPg33+muF0nnekrpkUWlwQuTLTbzWz49EkK5G8zPhaKtfCWbPWyhCsNd+R8wai/XOkSpG/8A3sLC88IsivoAAAAASUVORK5CYII="
+         x="15" y="12" width="34" height="38"/>
+</svg>

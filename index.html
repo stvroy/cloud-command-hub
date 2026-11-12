@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cloud Command Hub — Stephen O. Roy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg"/>
+<link rel="icon" type="image/x-icon" href="./favicon.ico"/>
+<link rel="stylesheet" href="./style.css"/>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-area">
+      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0057b8,#4fc3f7);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;letter-spacing:-0.5px;flex-shrink:0">SR</div>
+    </div>
+    <div class="org-name">Stephen O. Roy</div>
+    <div class="org-sub">Cloud Command Hub</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <a class="nav-item active" onclick="navigate('overview',this)"><span class="ni">◈</span>Executive Summary</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Infrastructure</div>
+      <a class="nav-item" onclick="navigate('ec2',this)"><span class="ni">▣</span>EC2 Instances<span class="nb" id="badge-ec2"></span></a>
+      <a class="nav-item" onclick="navigate('eks',this)"><span class="ni">⬡</span>EKS Kubernetes<span class="nb" id="badge-eks"></span></a>
+      <a class="nav-item" onclick="navigate('storage',this)"><span class="ni">◈</span>Volumes &amp; S3<span class="nb" id="badge-storage"></span></a>
+      <a class="nav-item" onclick="navigate('network',this)"><span class="ni">◎</span>Network &amp; ALB<span class="nb" id="badge-network"></span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Observability</div>
+      <a class="nav-item" onclick="navigate('uptime',this)"><span class="ni">◐</span>Service Uptime<span class="nb warn" id="badge-uptime"></span></a>
+      <a class="nav-item" onclick="navigate('logs',this)"><span class="ni">≡</span>Event Logs</a>
+      <a class="nav-item" onclick="navigate('alerts',this)"><span class="ni">◬</span>Active Alerts<span class="nb crit" id="badge-events"></span></a>
+      <a class="nav-item" onclick="navigate('containers',this)"><span class="ni">◫</span>Container Health<span class="nb crit" id="badge-containers"></span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Security</div>
+      <a class="nav-item" onclick="navigate('security',this)"><span class="ni">⬛</span>Threat Detection<span class="nb crit" id="badge-security"></span></a>
+      <a class="nav-item" onclick="navigate('iam',this)"><span class="ni">◧</span>IAM &amp; Access<span class="nb" id="badge-iam"></span></a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">FinOps</div>
+      <a class="nav-item" onclick="navigate('costs',this)"><span class="ni">◈</span>Monthly Costs</a>
+      <a class="nav-item" onclick="navigate('savings',this)"><span class="ni">◑</span>Savings &amp; Rightsizing</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Operations</div>
+      <a class="nav-item" onclick="navigate('deployments',this)"><span class="ni">▷</span>Deploy History</a>
+      <a class="nav-item" onclick="navigate('capacity',this)"><span class="ni">◰</span>Capacity Planning</a>
+      <a class="nav-item" onclick="navigate('instances',this)"><span class="ni">⏻</span>Instance Control</a>
+    </div>
+  </nav>
+
+  <!-- User footer -->
+  <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto">
+    <div id="user-info" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#0057b8,#4fc3f7);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0" id="user-avatar">?</div>
+      <div style="min-width:0">
+        <div style="font-size:11px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="user-name">Loading…</div>
+        <div style="font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="user-email"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button id="admin-btn" onclick="navigate('admin',this)"
+        style="display:none;flex:1;padding:5px 8px;background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.2);border-radius:6px;color:#4fc3f7;font-size:11px;cursor:pointer">
+        ◧ Admin
+      </button>
+      <button onclick="doLogout()"
+        style="flex:1;padding:5px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--t3);font-size:11px;cursor:pointer">
+        Sign out
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="pulse-row">
+      <span class="pulse-dot" id="pulse-dot"></span>
+      <span class="last-upd" id="last-updated">Connecting…</span>
+    </div>
+    <button class="btn-sm" onclick="fetchMetrics()">↻ Refresh</button>
+  </div>
+</aside>
+
+<!-- MAIN AREA -->
+<div class="main-wrap">
+  <header class="topbar">
+    <div class="tl">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="page-title" id="page-title">Executive Summary</div>
+        <div class="breadcrumb">Overview → <span id="breadcrumb-leaf">Summary</span></div>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="report-dl" title="Generate monthly PPTX report">
+        <input type="month" id="report-month" class="report-month-input" />
+        <button id="report-dl-btn" class="btn-sm" onclick="downloadMonthlyReport()">↓ Monthly Report</button>
+      </div>
+      <div class="region-pill" style="background:rgba(255,167,38,0.12);border-color:rgba(255,167,38,0.3);color:#ffb74d;cursor:default" title="Demo mode — static mock data, no live backend">Demo</div>
+      <div class="region-pill"><span class="rpulse"></span><span id="aws-region-label">us-east-1</span></div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ── OVERVIEW ─────────────────────────────── -->
+    <section id="s-overview" class="ds active">
+      <div class="kpi-grid">
+        <div class="kpi kpi-link" style="--a:#4fc3f7" onclick="navigate('ec2',null)" title="Go to EC2 Instances"><div class="kpi-ico">▣</div><div class="kpi-v" id="k-ec2">—</div><div class="kpi-l">EC2 Instances</div><div class="kpi-s" id="k-ec2s">—</div></div>
+        <div class="kpi kpi-link" style="--a:#81c784" onclick="navigate('eks',null)" title="Go to EKS Kubernetes"><div class="kpi-ico">⬡</div><div class="kpi-v" id="k-pods">—</div><div class="kpi-l">EKS Pods</div><div class="kpi-s" id="k-podss">—</div></div>
+        <div class="kpi kpi-link" style="--a:#ffb74d" onclick="navigate('uptime',null)" title="Go to Service Uptime"><div class="kpi-ico">◐</div><div class="kpi-v" id="k-uptime">—</div><div class="kpi-l">Avg Uptime</div><div class="kpi-s" id="k-uptimes">—</div></div>
+        <div id="kpi-alerts" class="kpi kpi-link" style="--a:#ef5350" onclick="navigate('alerts',null)" title="Go to Active Alerts"><div class="kpi-ico">◬</div><div class="kpi-v" id="k-alerts">—</div><div class="kpi-l">Active Alerts</div><div class="kpi-s" id="k-alertss">—</div></div>
+        <div id="kpi-cost" class="kpi kpi-link" style="--a:#ce93d8" onclick="navigate('costs',null)" title="Go to Monthly Costs"><div class="kpi-ico">◈</div><div class="kpi-v" id="k-cost">—</div><div class="kpi-l">Est. Monthly Cost</div><div class="kpi-s" id="k-cost-sub">AWS Cost Explorer</div></div>
+        <div class="kpi kpi-link" style="--a:#f06292" onclick="navigate('security',null)" title="Go to Threat Detection"><div class="kpi-ico">⬛</div><div class="kpi-v" id="k-sec">—</div><div class="kpi-l">Security Findings</div><div class="kpi-s" id="k-secs">GuardDuty</div></div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Infrastructure Health</span></div>
+          <div class="hbar-list">
+            <div class="hb-row"><span class="hb-lbl" title="% of running servers within healthy CPU, memory &amp; disk thresholds">Active Servers</span><div class="hb-track"><div class="hb-fill" id="hb-ec2" style="width:0%"></div></div><span class="hb-pct" id="hp-ec2">—</span></div>
+            <div class="hb-row"><span class="hb-lbl" title="% of pods running without failures (failed pods reduce this score)">Workloads</span><div class="hb-track"><div class="hb-fill" id="hb-eks" style="width:0%"></div></div><span class="hb-pct" id="hp-eks">—</span></div>
+            <div class="hb-row"><span class="hb-lbl" title="% of monitored service endpoints responding">Services Up</span><div class="hb-track"><div class="hb-fill" id="hb-svc" style="width:0%"></div></div><span class="hb-pct" id="hp-svc">—</span></div>
+            <div class="hb-row"><span class="hb-lbl" title="Security score based on GuardDuty threat findings">Security</span><div class="hb-track"><div class="hb-fill" id="hb-sec" style="width:0%"></div></div><span class="hb-pct" id="hp-sec">—</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Platform Snapshot</span></div>
+          <div id="ov-snapshot" class="snapshot-grid"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-hdr"><span class="card-title">AWS Region Distribution</span></div>
+        <div class="region-grid" id="region-grid">
+          <div class="rgn"><div class="rgn-dot pulsing"></div><div class="rgn-name">Loading…</div><div class="rgn-stats">Fetching region data</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EC2 ───────────────────────────────────── -->
+    <section id="s-ec2" class="ds">
+
+      <!-- ── EC2 Fleet Overview ─────────────────────────────── -->
+
+      <!-- Utilization Gauges: avg CPU / Memory / Disk across running fleet -->
+      <div class="util-gauges" id="ec2-util-gauges">
+        <div class="util-gauge po-clickable" onclick="openEC2StatModal('allcpu')" title="Click to see all instances by CPU">
+          <div class="util-gauge-icon">⚙</div>
+          <div class="util-gauge-label">Avg CPU Utilization</div>
+          <div class="util-gauge-pct" id="ec2-util-cpu-pct">—</div>
+          <div class="util-gauge-sub" id="ec2-util-cpu-sub">across running instances</div>
+          <div class="util-track"><div class="util-fill ok" id="ec2-util-cpu-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span>0%</span><span style="color:var(--warn)">▲ 60%</span><span style="color:var(--crit)">▲ 80%</span><span>100%</span></div>
+        </div>
+        <div class="util-gauge po-clickable" onclick="openEC2StatModal('allmem')" title="Click to see all instances by memory">
+          <div class="util-gauge-icon">◫</div>
+          <div class="util-gauge-label">Avg Memory Utilization</div>
+          <div class="util-gauge-pct" id="ec2-util-mem-pct">—</div>
+          <div class="util-gauge-sub" id="ec2-util-mem-sub">across running instances</div>
+          <div class="util-track"><div class="util-fill ok" id="ec2-util-mem-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span>0%</span><span style="color:var(--warn)">▲ 60%</span><span style="color:var(--crit)">▲ 80%</span><span>100%</span></div>
+        </div>
+        <div class="util-gauge po-clickable" onclick="openEC2StatModal('alldisk')" title="Click to see all instances by disk">
+          <div class="util-gauge-icon">◧</div>
+          <div class="util-gauge-label">Avg Disk Utilization</div>
+          <div class="util-gauge-pct" id="ec2-util-disk-pct">—</div>
+          <div class="util-gauge-sub" id="ec2-util-disk-sub">across running instances</div>
+          <div class="util-track"><div class="util-fill ok" id="ec2-util-disk-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span>0%</span><span style="color:var(--warn)">▲ 70%</span><span style="color:var(--crit)">▲ 85%</span><span>100%</span></div>
+        </div>
+      </div>
+
+      <!-- Quick-stats bar: fleet health at a glance -->
+      <div class="pod-overview" id="ec2-fleet-stats">
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('running')"  title="Show running instances"> <div class="po-v ok"    id="ec2-st-running">—</div><div class="po-l">Running</div></div>
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('stopped')"  title="Show stopped instances"> <div class="po-v muted" id="ec2-st-stopped">—</div><div class="po-l">Stopped</div></div>
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('eks')"      title="Show EKS nodes">         <div class="po-v muted" id="ec2-st-eks">—</div><div class="po-l">EKS Nodes</div></div>
+        <div class="po-stat"><div class="po-v muted" id="ec2-st-accounts">—</div><div class="po-l">Accounts</div></div>
+        <div class="po-stat"><div class="po-v muted" id="ec2-st-regions">—</div><div class="po-l">Regions</div></div>
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('highcpu')"  title="Show high CPU instances"> <div class="po-v crit" id="ec2-st-highcpu">—</div><div class="po-l">High CPU</div></div>
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('highmem')"  title="Show high memory instances"><div class="po-v warn" id="ec2-st-highmem">—</div><div class="po-l">High Memory</div></div>
+        <div class="po-stat po-clickable" onclick="openEC2StatModal('highdisk')" title="Show high disk instances"> <div class="po-v warn" id="ec2-st-highdisk">—</div><div class="po-l">High Disk</div></div>
+      </div>
+
+      <!-- Per-account health grid -->
+      <div class="ec2-acct-grid" id="ec2-acct-grid"></div>
+
+      <div class="toolbar">
+        <input class="search-box" id="ec2-q" placeholder="Filter by name, ID, account…" oninput="renderEC2()"/>
+        <select class="sel" id="ec2-state" onchange="renderEC2()">
+          <option value="">All States</option><option value="running">Running</option><option value="stopped">Stopped</option>
+        </select>
+        <select class="sel" id="ec2-region" onchange="renderEC2()">
+          <option value="">All Regions</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">EC2 Instances</span><span class="tag" id="ec2-tag">—</span></div>
+        <div class="tscroll">
+          <table class="dt"><thead><tr>
+            <th>Account</th><th>Name</th><th>Instance ID</th><th>Type</th><th>AZ / Region</th><th>CPU</th><th>Memory</th><th>Disk</th><th>State</th>
+          </tr></thead><tbody id="ec2-tbody"><tr><td colspan="9" class="tr-load">Loading EC2 data…</td></tr></tbody></table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── EKS ───────────────────────────────────── -->
+    <section id="s-eks" class="ds">
+
+      <!-- Cluster version banner -->
+      <div id="eks-version-bar" style="display:none;align-items:center;gap:10px;margin-bottom:12px;font-size:13px">
+        <span class="muted">Kubernetes</span>
+        <span id="eks-version-badge" style="font-weight:600;font-size:13px"></span>
+        <span id="eks-version-hint" style="font-size:12px"></span>
+      </div>
+
+      <!-- Cluster Utilization Gauges -->
+      <div class="util-gauges" id="eks-util-gauges">
+        <div class="util-gauge po-clickable" onclick="openUtilBreakdownModal('cpu')" title="Click to see CPU breakdown by namespace">
+          <div class="util-gauge-icon">⚙</div>
+          <div class="util-gauge-label">CPU Utilization <span class="muted" style="font-size:10px">↗ breakdown</span></div>
+          <div class="util-gauge-pct" id="util-cpu-pct">—</div>
+          <div class="util-gauge-sub" id="util-cpu-sub">requested / allocatable</div>
+          <div class="util-track"><div class="util-fill ok" id="util-cpu-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span>0%</span><span style="color:var(--warn)">▲ 60%</span><span style="color:var(--crit)">▲ 80%</span><span>100%</span></div>
+        </div>
+        <div class="util-gauge po-clickable" onclick="openUtilBreakdownModal('mem')" title="Click to see Memory breakdown by namespace">
+          <div class="util-gauge-icon">◫</div>
+          <div class="util-gauge-label">Memory Utilization <span class="muted" style="font-size:10px">↗ breakdown</span></div>
+          <div class="util-gauge-pct" id="util-mem-pct">—</div>
+          <div class="util-gauge-sub" id="util-mem-sub">requested / allocatable</div>
+          <div class="util-track"><div class="util-fill ok" id="util-mem-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span>0%</span><span style="color:var(--warn)">▲ 60%</span><span style="color:var(--crit)">▲ 80%</span><span>100%</span></div>
+        </div>
+        <div class="util-gauge">
+          <div class="util-gauge-icon">◧</div>
+          <div class="util-gauge-label">Storage Provisioned</div>
+          <div class="util-gauge-pct" id="util-storage-pct" style="font-size:28px">—</div>
+          <div class="util-gauge-sub" id="util-storage-sub">total PVC capacity</div>
+          <div class="util-track"><div class="util-fill ok" id="util-storage-bar" style="width:0%"></div></div>
+          <div class="util-thresholds"><span id="util-storage-bound">— Bound</span><span id="util-storage-pending">— Pending</span><span id="util-storage-lost" style="color:var(--crit)">— Lost</span></div>
+        </div>
+      </div>
+
+      <!-- Pod overview stats -->
+      <div class="pod-overview" id="pod-overview">
+        <div class="po-stat po-clickable" onclick="openPodListModal('running')"   title="Show running pods">   <div class="po-v ok"    id="po-run">—</div><div class="po-l">Running</div></div>
+        <div class="po-stat po-clickable" onclick="openPodListModal('pending')"   title="Show pending pods">   <div class="po-v warn"  id="po-pend">—</div><div class="po-l">Pending</div></div>
+        <div class="po-stat po-clickable" onclick="openPodListModal('failed')"    title="Show failed pods">    <div class="po-v crit"  id="po-fail">—</div><div class="po-l">Failed</div></div>
+        <div class="po-stat po-clickable" onclick="openPodListModal('succeeded')" title="Show succeeded pods"> <div class="po-v ok"    id="po-succ">—</div><div class="po-l">Succeeded</div></div>
+        <div class="po-stat"><div class="po-v muted" id="po-total">—</div><div class="po-l">Total Pods</div></div>
+        <div class="po-stat"><div class="po-v ok"   id="po-nodes">—</div><div class="po-l">Ready Nodes</div></div>
+        <div class="po-stat po-clickable" onclick="openPodListModal('oom')"       title="Show OOMKilled pods"> <div class="po-v crit"  id="po-oom">—</div><div class="po-l">OOMKilled</div></div>
+        <div class="po-stat"><div class="po-v warn" id="po-pressure">—</div><div class="po-l">Nodes w/ Pressure</div></div>
+        <div class="po-stat po-clickable" onclick="openPodListModal('pending_resources')" title="Show pods pending due to resources"><div class="po-v crit" id="po-pend-res">—</div><div class="po-l">Pending (Resources)</div></div>
+        <div class="po-stat po-clickable" onclick="openPvcListModal('near_full')" title="PVCs at 80%+ capacity"><div class="po-v warn" id="po-pvc-full">—</div><div class="po-l">PVCs Near Full</div></div>
+      </div>
+
+      <!-- Cluster Nodes -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">Cluster Nodes</span><span class="muted" style="font-size:11px">Click a node to explore namespaces &amp; pods</span></div>
+        <div class="tscroll"><table class="dt"><thead><tr><th>Node</th><th>Type</th><th>Zone</th><th>CPU Usage</th><th>Mem Usage</th><th>Pressure</th><th>Status</th></tr></thead>
+        <tbody id="eks-nodes"><tr><td colspan="7" class="tr-load">Loading…</td></tr></tbody></table></div>
+      </div>
+
+    </section>
+
+    <!-- ── VOLUMES & S3 ──────────────────────────── -->
+    <section id="s-storage" class="ds">
+
+      <!-- Overview stats bar -->
+      <div class="pod-overview" id="storage-stats">
+        <div class="po-stat po-clickable" onclick="storageStatClick('all-ebs')" title="Show all EBS volumes"><div class="po-v ok" id="st-vol-total">—</div><div class="po-l">Total Volumes</div></div>
+        <div class="po-stat po-clickable" onclick="storageStatClick('inuse')"   title="Show in-use volumes"><div class="po-v ok" id="st-vol-inuse">—</div><div class="po-l">In Use</div></div>
+        <div class="po-stat po-clickable" onclick="storageStatClick('unattached')" title="Show unattached volumes"><div class="po-v warn" id="st-vol-avail">—</div><div class="po-l">Unattached</div></div>
+        <div class="po-stat po-clickable" onclick="storageStatClick('all-ebs')" title="Show all EBS volumes by size"><div class="po-v muted" id="st-vol-gib">—</div><div class="po-l">Total GiB</div></div>
+
+        <div id="stat-orphan-count" class="po-stat po-clickable" onclick="storageStatClick('orphaned')" title="Show orphaned snapshots"><div class="po-v warn" id="st-orphan-count">—</div><div class="po-l">Orphaned Snaps</div></div>
+        <div class="po-stat po-clickable" onclick="storageStatClick('all-s3')" title="Show all S3 buckets"><div class="po-v ok" id="st-s3-buckets">—</div><div class="po-l">S3 Buckets</div></div>
+        <div class="po-stat po-clickable" onclick="storageStatClick('all-s3')" title="Show all S3 buckets by size"><div class="po-v muted" id="st-s3-gib">—</div><div class="po-l">S3 Total GiB</div></div>
+        <div id="stat-s3-public" class="po-stat po-clickable" onclick="storageStatClick('public-s3')" title="Show public S3 buckets"><div class="po-v crit" id="st-s3-public">—</div><div class="po-l">Public Buckets</div></div>
+      </div>
+
+      <!-- EBS Volumes table -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr">
+          <span class="card-title">EBS Volumes</span>
+          <span class="tag" id="ebs-tag">—</span>
+          <input class="filter-input" id="ebs-filter" placeholder="Filter volumes…" oninput="filterEBS(this.value)" style="margin-left:auto">
+        </div>
+        <div class="tscroll">
+          <table class="dt"><thead><tr>
+            <th>Name / ID</th><th>Account</th><th>Type</th><th>Size</th><th>State</th><th>Attached To</th><th>AZ</th><th>Snapshots</th>
+          </tr></thead>
+          <tbody id="ebs-tbody"><tr><td colspan="8" class="tr-load">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- Orphaned Snapshots panel -->
+      <div class="card" id="orphan-snap-card" style="margin-bottom:16px;display:none">
+        <div class="card-hdr">
+          <span class="card-title">⚠ Orphaned Snapshots</span>
+          <span class="tag warn" id="orphan-snap-tag">—</span>
+          <span class="muted" id="orphan-snap-sub" style="font-size:11px;margin-left:8px"></span>
+        </div>
+        <div class="tscroll">
+          <table class="dt"><thead><tr>
+            <th>Snapshot ID</th><th>Name / Description</th><th>Source Volume (deleted)</th><th>Size</th><th>Account</th><th>Region</th><th>Created</th>
+          </tr></thead>
+          <tbody id="orphan-snap-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- S3 Buckets table -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">S3 Buckets</span>
+          <span class="tag" id="s3-tag">—</span>
+          <input class="filter-input" id="s3-filter" placeholder="Filter buckets…" oninput="filterS3(this.value)" style="margin-left:auto">
+        </div>
+        <div class="tscroll">
+          <table class="dt"><thead><tr>
+            <th>Bucket Name</th><th>Account</th><th>Region</th><th>Size</th><th>Objects</th><th>Versioning</th><th>Encryption</th><th>Public Access</th>
+          </tr></thead>
+          <tbody id="s3-tbody"><tr><td colspan="8" class="tr-load">Loading…</td></tr></tbody></table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── NETWORK ───────────────────────────────── -->
+    <section id="s-network" class="ds">
+      <div id="alb-panel"></div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">EC2 Network Traffic (5 min)</span><span class="tag" id="net-summary-tag">—</span></div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr><th>Instance</th><th>Type</th><th>In (MB)</th><th>Out (MB)</th><th>In MB/s</th><th>Out MB/s</th><th>Packets In</th><th>Packets Out</th><th>Alert</th></tr></thead>
+            <tbody id="ec2-net-tbody"><tr><td colspan="9" class="tr-load">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">SSH Login Activity (24h)</span><span class="tag" id="ssh-status-tag">—</span></div>
+          <div id="ssh-panel" class="addon-box compact"><div class="ab-desc">Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">VPC Flow Logs</span><span class="tag" id="vpc-status-tag">—</span></div>
+          <div id="vpc-panel" class="addon-box compact"><div class="ab-desc">Loading…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── UPTIME ────────────────────────────────── -->
+    <section id="s-uptime" class="ds">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:600;color:var(--t1)">Service Uptime</div>
+        <div id="ut-source-badge" style="font-size:11px;color:var(--t3)"></div>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:12px">
+        <div id="ut-kpi-up"   class="kpi" style="--a:#4ade80;cursor:pointer" onclick="filterUptimeByStatus('up')"><div class="kpi-ico">◐</div><div class="kpi-v" id="ut-up">—</div><div class="kpi-l">Services Up</div><div class="kpi-s" id="ut-up-sub">—</div></div>
+        <div id="ut-kpi-down" class="kpi" style="--a:#ef5350;cursor:pointer" onclick="filterUptimeByStatus('down')"><div class="kpi-ico">◑</div><div class="kpi-v" id="ut-down">—</div><div class="kpi-l">Services Down</div><div class="kpi-s">Requires attention</div></div>
+        <div id="ut-kpi-maintenance" class="kpi" style="--a:#4fc3f7;cursor:pointer" onclick="filterUptimeByStatus('maintenance')"><div class="kpi-ico">⚙</div><div class="kpi-v" id="ut-maint">—</div><div class="kpi-l">Maintenance</div><div class="kpi-s">Planned downtime</div></div>
+        <div id="ut-kpi-ssl"  class="kpi" style="--a:#ffb74d;cursor:pointer" onclick="filterUptimeByStatus('ssl')"><div class="kpi-ico">🔒</div><div class="kpi-v" id="ut-ssl-expiring">—</div><div class="kpi-l">SSL Expiring Soon</div><div class="kpi-s">Within 30 days</div></div>
+        <div class="kpi" style="--a:#818cf8"><div class="kpi-ico">⟳</div><div class="kpi-v" id="ut-avg-uptime">—</div><div class="kpi-l">Avg Uptime (30d)</div><div class="kpi-s">Excluding maintenance</div></div>
+      </div>
+      <!-- Quarterly uptime cards (clickable → report modal) -->
+      <div id="ut-quarterly-cards" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px"></div>
+      <!-- Quarterly uptime by domain group -->
+      <div id="ut-quarterly-groups" style="margin-bottom:12px"></div>
+      <!-- Monthly uptime cards (clickable → report modal) -->
+      <div id="ut-monthly-cards" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+
+      <!-- Master-detail layout -->
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--card-border)">
+          <input id="ut-search" type="text" placeholder="Search services…"
+            oninput="filterUptimeList(this.value)"
+            style="width:100%;background:var(--bg2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 10px;color:var(--t1);font-size:12px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div class="ut-master">
+          <div class="ut-list-panel">
+            <div id="ut-service-list"><div style="padding:16px;color:var(--t3);font-size:12px">Loading…</div></div>
+          </div>
+          <div class="ut-detail-panel" id="ut-detail-panel">
+            <div style="padding:40px 0;text-align:center;color:var(--t3);font-size:13px">Select a service to view details</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── LOGS ──────────────────────────────────── -->
+    <section id="s-logs" class="ds">
+      <!-- stat tiles -->
+      <div class="pod-overview" style="margin-bottom:16px">
+        <div class="po-stat"><div class="po-v muted" id="log-stat-total">—</div><div class="po-l">Log Lines</div></div>
+        <div class="po-stat"><div class="po-v crit"  id="log-stat-crit">—</div><div class="po-l">Critical</div></div>
+        <div class="po-stat"><div class="po-v warn"  id="log-stat-warn">—</div><div class="po-l">Warnings</div></div>
+        <div class="po-stat"><div class="po-v ok"    id="log-stat-sources">—</div><div class="po-l">Sources Active</div></div>
+      </div>
+
+      <!-- Auth Access Activity panel — visible only when source=auth -->
+      <div id="auth-activity-panel" style="display:none;margin-bottom:16px">
+        <div class="pod-overview" style="margin-bottom:12px">
+          <div class="po-stat"><div class="po-v muted" id="auth-stat-users">—</div><div class="po-l">Users Active</div></div>
+          <div class="po-stat"><div class="po-v muted" id="auth-stat-ssh">—</div><div class="po-l">SSH Logins</div></div>
+          <div class="po-stat"><div class="po-v muted" id="auth-stat-sudo">—</div><div class="po-l">Sudo / su Events</div></div>
+          <div class="po-stat"><div class="po-v ok"   id="auth-stat-fail">—</div><div class="po-l">Failed Logins</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start">
+          <div class="card" style="min-width:0">
+            <div class="card-hdr" style="flex-wrap:wrap;gap:8px">
+              <span class="card-title">Access Activity</span>
+              <span class="tag" id="auth-feed-count" style="font-size:10px">—</span>
+              <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);cursor:pointer;font-weight:400">
+                <input type="checkbox" id="auth-show-cron" onchange="_renderAuthPanel()" style="cursor:pointer;accent-color:var(--ok)"> Show cron jobs
+              </label>
+            </div>
+            <div class="tscroll" style="max-height:300px">
+              <table class="dt">
+                <thead><tr><th style="width:75px">Time</th><th style="width:110px">Who</th><th>Did what</th><th style="width:140px">On server</th></tr></thead>
+                <tbody id="auth-feed-tbody"><tr><td colspan="4" class="tr-load">—</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Activity by User</span></div>
+            <div id="auth-user-chart" style="padding:8px 12px 12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Syslog Health panel — visible only when source=syslog -->
+      <div id="syslog-activity-panel" style="display:none;margin-bottom:16px">
+        <div class="pod-overview" style="margin-bottom:12px">
+          <div class="po-stat"><div class="po-v ok"   id="syslog-stat-fail">—</div><div class="po-l">Service Failures</div></div>
+          <div class="po-stat"><div class="po-v ok"   id="syslog-stat-oom">—</div><div class="po-l">OOM Kills</div></div>
+          <div class="po-stat"><div class="po-v ok"   id="syslog-stat-disk">—</div><div class="po-l">Disk / IO Errors</div></div>
+          <div class="po-stat"><div class="po-v muted" id="syslog-stat-restart">—</div><div class="po-l">Service Restarts</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start">
+          <div class="card" style="min-width:0">
+            <div class="card-hdr" style="flex-wrap:wrap;gap:8px">
+              <span class="card-title">System Events</span>
+              <span class="tag" id="syslog-feed-count" style="font-size:10px">—</span>
+              <label style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);cursor:pointer;font-weight:400">
+                <input type="checkbox" id="syslog-show-info" onchange="_renderSyslogPanel()" style="cursor:pointer;accent-color:var(--ok)"> Show info events
+              </label>
+            </div>
+            <div class="tscroll" style="max-height:300px">
+              <table class="dt">
+                <thead><tr><th style="width:75px">Time</th><th>What happened</th><th style="width:140px">On server</th></tr></thead>
+                <tbody id="syslog-feed-tbody"><tr><td colspan="3" class="tr-load">—</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Events by Server</span></div>
+            <div id="syslog-server-chart" style="padding:8px 12px 12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- log stream card -->
+      <div class="card">
+        <div class="card-hdr" style="flex-wrap:wrap;gap:8px">
+          <span class="card-title">Log Stream</span>
+          <span class="tag" id="log-count">—</span>
+          <select class="sel" id="log-source" onchange="fetchLogs()" style="margin-left:auto">
+            <option value="">All Sources</option>
+            <optgroup label="── EC2 ──────────────">
+              <option value="auth">auth (SSH / sudo)</option>
+              <option value="syslog">syslog</option>
+              <option value="docker">docker (app containers)</option>
+            </optgroup>
+            <optgroup label="── EKS ──────────────">
+              <option value="eks-pods">eks-pods</option>
+              <option value="eks-audit">eks-audit (kubectl)</option>
+              <option value="falco">falco (runtime)</option>
+            </optgroup>
+            <optgroup label="── AWS ──────────────">
+              <option value="cloudtrail">cloudtrail</option>
+            </optgroup>
+          </select>
+          <input class="filter-input" id="log-instance" placeholder="Namespace…" oninput="filterLogsLocal()" style="width:160px">
+          <input class="filter-input" id="log-search"   placeholder="Search logs…"          oninput="filterLogsLocal()" style="width:180px">
+          <div style="display:flex;gap:4px;align-items:center">
+            <button class="btn-sm log-range active" data-range="1h"  onclick="setLogRange(this)">1h</button>
+            <button class="btn-sm log-range"         data-range="6h"  onclick="setLogRange(this)">6h</button>
+            <button class="btn-sm log-range"         data-range="24h" onclick="setLogRange(this)">24h</button>
+            <button class="btn-sm log-range"         data-range="48h" onclick="setLogRange(this)">48h</button>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center">
+            <button class="btn-sm" id="log-range-btn" onclick="openRangeModal()" title="Set custom date range or export logs" style="gap:4px">📅 Range &amp; Export</button>
+            <span id="log-range-active-label" class="muted" style="font-size:10px;display:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+            <button class="btn-sm muted" id="log-clear-range" onclick="clearLogCustomRange()" style="display:none" title="Clear custom range">✕</button>
+          </div>
+          <!-- hidden: keeps setLogRange / clearLogCustomRange working without DOM changes -->
+          <input type="hidden" id="log-start-time">
+          <span id="log-end-label" style="display:none"></span>
+          <button class="btn-sm" id="log-live-btn" onclick="toggleLogsRefresh()" title="Toggle live refresh">⟳ Live</button>
+        </div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr><th style="width:32px"></th><th style="width:140px">Time</th><th style="width:120px">Source</th><th style="width:140px">Namespace</th><th>Message</th></tr></thead>
+            <tbody id="log-tbody"><tr><td colspan="5" class="tr-load">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LOG DETAIL MODAL ──────────────────────── -->
+    <div id="log-modal-overlay" onclick="closeLogModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center">
+      <div onclick="event.stopPropagation()" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:780px;width:90%;max-height:80vh;overflow-y:auto;position:relative">
+        <button onclick="closeLogModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer">✕</button>
+        <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span id="lm-sev-dot" style="font-size:16px">○</span>
+          <span id="lm-job" class="tag" style="font-size:11px"></span>
+          <span id="lm-ns"  class="tag" style="font-size:11px;background:rgba(79,195,247,.1)"></span>
+          <span id="lm-pod" class="muted" style="font-size:11px"></span>
+          <span id="lm-ts"  class="muted" style="font-size:11px;margin-left:auto"></span>
+        </div>
+        <pre id="lm-msg" style="white-space:pre-wrap;word-break:break-word;font-size:12px;color:var(--t1);background:var(--bg1);border:1px solid var(--border);border-radius:4px;padding:12px;margin:0;line-height:1.6"></pre>
+      </div>
+    </div>
+
+    <!-- ── LOG RANGE & EXPORT MODAL ───────────────── -->
+    <div id="range-modal-overlay" onclick="closeRangeModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1002;align-items:center;justify-content:center">
+      <div onclick="event.stopPropagation()" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px;width:440px;max-width:95vw;position:relative">
+        <button onclick="closeRangeModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer;line-height:1">✕</button>
+        <h3 style="margin:0 0 22px;font-size:15px;font-weight:600;color:var(--t1)">Log Range &amp; Export</h3>
+
+        <div style="display:grid;gap:12px;margin-bottom:18px">
+          <label style="font-size:12px;color:var(--t2);display:block">
+            From
+            <input type="datetime-local" id="rm-start" class="filter-input" style="display:block;width:100%;margin-top:5px;font-size:12px;box-sizing:border-box">
+          </label>
+          <label style="font-size:12px;color:var(--t2);display:block">
+            To
+            <input type="datetime-local" id="rm-end" class="filter-input" style="display:block;width:100%;margin-top:5px;font-size:12px;box-sizing:border-box">
+          </label>
+        </div>
+
+        <div style="display:flex;gap:5px;align-items:center;margin-bottom:22px">
+          <span style="font-size:11px;color:var(--t3);margin-right:2px">Quick:</span>
+          <button class="btn-sm" onclick="_setRangeModalQuick('15m')">15m</button>
+          <button class="btn-sm" onclick="_setRangeModalQuick('1h')">1h</button>
+          <button class="btn-sm" onclick="_setRangeModalQuick('6h')">6h</button>
+          <button class="btn-sm" onclick="_setRangeModalQuick('24h')">24h</button>
+          <button class="btn-sm" onclick="_setRangeModalQuick('48h')">48h</button>
+        </div>
+
+        <div style="background:var(--bg1);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:22px">
+          <p style="margin:0 0 10px;font-size:12px;color:var(--t2);line-height:1.5">Download a CSV of all logs in the selected time window. Respects the active source and namespace filters.</p>
+          <button id="rm-dl-btn" onclick="downloadFromRangeModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;border-radius:5px;border:1px solid rgba(79,195,247,.35);background:rgba(79,195,247,.08);color:var(--accent);font-size:12px;cursor:pointer;font-weight:500">
+            ↓ Download CSV
+          </button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn-sm muted" onclick="closeRangeModal()">Cancel</button>
+          <button class="btn-sm" onclick="applyRangeModal()" style="background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.3);color:#4ade80;font-weight:500">Apply Range</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTS ────────────────────────────────── -->
+    <section id="s-alerts" class="ds">
+      <div id="ov-status-bar" class="ov-status ok" style="margin-bottom:16px">
+        <span class="ov-status-dot"></span>
+        <span id="ov-status-text">Loading…</span>
+      </div>
+      <div class="card">
+        <div class="card-hdr" style="gap:12px">
+          <span class="card-title">Incidents</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn-sm active" id="inc-tab-active"  onclick="switchIncidentTab('active')">Active <span id="inc-active-count" class="tag" style="font-size:10px;background:rgba(239,83,80,.15);color:var(--crit)"></span></button>
+            <button class="btn-sm"        id="inc-tab-history" onclick="switchIncidentTab('history')">History</button>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn-sm" onclick="loadIncidents()">↻ Refresh</button>
+            <button class="btn-sm" style="color:var(--warn);border-color:rgba(255,167,38,.3)" onclick="clearAllIncidents()">Clear all open</button>
+          </div>
+        </div>
+
+        <!-- Active tab -->
+        <div id="inc-panel-active">
+          <div id="alerts-list"><div class="no-alerts">✓ No active alerts. All systems nominal.</div></div>
+          <div id="inc-active-table" style="display:none">
+            <div class="tscroll">
+              <table class="dt">
+                <thead><tr><th style="width:32px"></th><th style="width:130px">First Seen</th><th style="width:110px">Source</th><th style="width:130px">Namespace</th><th style="width:130px">Pod</th><th>Message</th><th style="width:90px"></th></tr></thead>
+                <tbody id="inc-active-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- History tab -->
+        <div id="inc-panel-history" style="display:none">
+          <div class="tscroll">
+            <table class="dt">
+              <thead><tr><th style="width:32px"></th><th style="width:130px">First Seen</th><th style="width:110px">Source</th><th style="width:130px">Namespace</th><th>Message</th><th style="width:130px">Resolved By</th><th style="width:130px">Resolved At</th><th>Note</th></tr></thead>
+              <tbody id="inc-history-tbody"><tr><td colspan="8" class="tr-load">Load history to view</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resolve modal -->
+      <div id="resolve-modal-overlay" onclick="closeResolveModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1001;align-items:center;justify-content:center">
+        <div onclick="event.stopPropagation()" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;max-width:480px;width:90%;position:relative">
+          <button onclick="closeResolveModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer">✕</button>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Resolve Incident</div>
+          <div id="resolve-modal-msg" class="muted" style="font-size:12px;margin-bottom:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <input id="resolve-note" class="filter-input" placeholder="Resolution note (optional)…" style="width:100%;box-sizing:border-box;margin-bottom:12px">
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn-sm" onclick="closeResolveModal()">Cancel</button>
+            <button class="btn-sm" style="background:rgba(102,187,106,.15);color:var(--ok);border-color:rgba(102,187,106,.4)" onclick="confirmResolve()">Mark Resolved</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CONTAINER HEALTH ──────────────────────────────── -->
+    <section id="s-containers" class="ds">
+
+      <!-- Summary KPI bar -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px" id="ct-kpi-row">
+        <div class="kpi" style="--a:var(--ok)"><div class="kpi-ico">▶</div><div class="kpi-v" id="ct-kpi-running">—</div><div class="kpi-l">Running</div><div class="kpi-s">Active containers</div></div>
+        <div class="kpi" style="--a:var(--crit)"><div class="kpi-ico">✗</div><div class="kpi-v" id="ct-kpi-failed">—</div><div class="kpi-l">Failed</div><div class="kpi-s">Non-zero exit code</div></div>
+        <div class="kpi" style="--a:var(--t3)"><div class="kpi-ico">◻</div><div class="kpi-v" id="ct-kpi-stopped">—</div><div class="kpi-l">Stopped</div><div class="kpi-s">Clean exit</div></div>
+        <div class="kpi" style="--a:var(--warn)"><div class="kpi-ico">↻</div><div class="kpi-v" id="ct-kpi-hosts">—</div><div class="kpi-l">Hosts</div><div class="kpi-s">Monitored instances</div></div>
+      </div>
+
+      <!-- Per-host cards rendered by JS -->
+      <div id="ct-host-cards">
+        <div class="card" style="padding:32px;text-align:center;color:var(--t3);font-size:13px">Loading…</div>
+      </div>
+
+    </section>
+
+    <!-- ── SECURITY ──────────────────────────────── -->
+    <section id="s-security" class="ds">
+      <div class="row2">
+        <div class="card"><div class="card-hdr"><span class="card-title">Security Score</span></div>
+          <div class="sec-score-wrap">
+            <div class="score-ring-wrap">
+              <svg viewBox="0 0 120 120" width="130" height="130">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"/>
+                <circle id="score-ring-circle" cx="60" cy="60" r="50" fill="none" stroke="#4fc3f7" stroke-width="10"
+                  stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="score-center" id="score-center">—</div>
+            </div>
+            <div class="score-checks">
+              <div class="sc-row ok" id="check-encryption"><span class="sc-ico">✓</span>Encryption at rest</div>
+              <div class="sc-row ok" id="check-mfa"><span class="sc-ico">✓</span>MFA enabled</div>
+              <div class="sc-row ok" id="check-cloudtrail"><span class="sc-ico">✓</span>CloudTrail active</div>
+              <div class="sc-row ok" id="check-vpc-flowlogs"><span class="sc-ico">✓</span>VPC Flow Logs</div>
+              <div class="sc-row warn" id="check-s3-public"><span class="sc-ico">!</span>Public S3 buckets</div>
+              <div class="sc-row warn" id="check-sg"><span class="sc-ico">!</span>Overpermissive SGs</div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-hdr"><span class="card-title">GuardDuty Findings</span><span class="tag info">Addon</span></div>
+          <div class="addon-box compact"><div class="ab-title">Threat Detection Collector</div>
+            <div class="ab-desc">Create <code>backend/collectors/guardduty.py</code> using <code>boto3.client('guardduty')</code> to pull live threat findings.</div>
+            <div class="sec-mock">
+              <div class="sm-row"><span class="sev high">HIGH</span><span>Brute force SSH on i-0a1b2c3d</span><span class="muted">—</span></div>
+              <div class="sm-row"><span class="sev med">MED</span><span>Unusual API from unknown IP</span><span class="muted">—</span></div>
+              <div class="sm-row"><span class="sev low">LOW</span><span>Port scan on subnet</span><span class="muted">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="card-hdr"><span class="card-title">GuardDuty Findings</span></div>
+        <div class="tscroll"><table class="dt"><thead><tr><th>Finding</th><th>Resource Type</th><th>Resource</th><th>Finding Type</th><th>Severity</th></tr></thead>
+        <tbody id="sg-tbody"><tr><td colspan="5" class="tr-load">Enable SecurityCollector for live data.</td></tr></tbody></table></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-hdr"><span class="card-title">Infrastructure Security</span></div>
+        <div class="card-sub-hdr">Overpermissive Security Groups</div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr><th>Security Group</th><th>VPC</th><th>Account</th><th>Region</th><th>Risky Rules</th></tr></thead>
+            <tbody id="sg-issues-tbody"><tr><td colspan="5" class="tr-load">Loading security data…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="card-sub-hdr" style="margin-top:12px">VPCs Without Flow Logs</div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr><th>VPC</th><th>Account</th><th>Region</th></tr></thead>
+            <tbody id="vpc-flowlog-tbody"><tr><td colspan="3" class="tr-load">Loading security data…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── IAM ───────────────────────────────────── -->
+    <section id="s-iam" class="ds">
+
+      <!-- KPI row -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:16px">
+        <div class="kpi" style="--a:#4fc3f7"><div class="kpi-ico">◧</div><div class="kpi-v" id="iam-total">—</div><div class="kpi-l">Total IAM Users</div><div class="kpi-s">Across all accounts</div></div>
+        <div class="kpi" style="--a:#ef5350"><div class="kpi-ico">⬛</div><div class="kpi-v" id="iam-no-mfa">—</div><div class="kpi-l">No MFA</div><div class="kpi-s">Critical risk</div></div>
+        <div class="kpi" style="--a:#ffb74d"><div class="kpi-ico">⚷</div><div class="kpi-v" id="iam-stale">—</div><div class="kpi-l">Stale Keys (90d+)</div><div class="kpi-s">Unused access keys</div></div>
+        <div class="kpi" style="--a:#ce93d8"><div class="kpi-ico">★</div><div class="kpi-v" id="iam-admins">—</div><div class="kpi-l">Admin Users</div><div class="kpi-s">AdministratorAccess</div></div>
+        <div class="kpi" style="--a:#4ade80"><div class="kpi-ico">✓</div><div class="kpi-v" id="iam-score">—</div><div class="kpi-l">IAM Health Score</div><div class="kpi-s">Based on findings</div></div>
+      </div>
+
+      <!-- User table -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">IAM Users — All Accounts</span>
+          <span class="tag" id="iam-tag">—</span>
+        </div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr>
+              <th>Account</th>
+              <th>User</th>
+              <th>MFA</th>
+              <th>Last Login</th>
+              <th>Access Keys</th>
+              <th>Key Age</th>
+              <th>Last Key Used</th>
+              <th>Admin</th>
+              <th>Risk</th>
+            </tr></thead>
+            <tbody id="iam-tbody">
+              <tr><td colspan="9" class="tr-load">Loading IAM data…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── COMPLIANCE ────────────────────────────── -->
+
+    <!-- ── COSTS ─────────────────────────────────── -->
+    <section id="s-costs" class="ds">
+
+      <!-- Data lag notice -->
+      <div id="cost-lag-notice" style="
+        display:flex; align-items:center; gap:10px;
+        background:rgba(251,191,36,0.07);
+        border:1px solid rgba(251,191,36,0.2);
+        border-radius:var(--radius);
+        padding:10px 16px; margin-bottom:16px;
+        font-size:12px; color:var(--t2);
+      ">
+        <span style="font-size:16px">🕐</span>
+        <div>
+          <span style="font-weight:500;color:var(--warn)">Cost data has a 24-hour delay</span>
+          — CUR data lands in S3 with a ~24h lag. This is an AWS billing pipeline delay, not a dashboard issue.
+          <span id="cost-collected-at" style="color:var(--t3);margin-left:6px"></span>
+        </div>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="fin-tabs">
+        <button class="fin-tab active" onclick="switchFinTab('mtd', this)">This Month</button>
+        <button class="fin-tab" onclick="switchFinTab('ytd', this)">Year to Date</button>
+        <button class="fin-tab" onclick="switchFinTab('history', this)">12-Month History</button>
+        <button class="fin-tab" onclick="switchFinTab('accounts', this)">By Account</button>
+        <button class="fin-tab" onclick="switchFinTab('resources', this)">By Resource</button>
+        <button class="fin-tab" onclick="switchFinTab('instance', this)">By Instance</button>
+        <button class="fin-tab" onclick="switchFinTab('application', this)">By Application</button>
+        <button class="fin-tab" onclick="switchFinTab('drivers', this)">Cost Drivers</button>
+      </div>
+
+      <!-- ── TAB: THIS MONTH ── -->
+      <div id="fin-tab-mtd" class="fin-pane active">
+        <!-- KPI row -->
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+          <div class="kpi" style="--a:#ce93d8">
+            <div class="kpi-ico">◈</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-mtd">—</div>
+              <div class="kpi-l">Month-to-Date</div>
+              <div class="kpi-s" id="c-mtd-sub">Loading…</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#4fc3f7">
+            <div class="kpi-ico">◎</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-fc">—</div>
+              <div class="kpi-l">Forecast (EOM)</div>
+              <div class="kpi-s" id="c-fc-sub">Based on daily run rate</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#81c784">
+            <div class="kpi-ico">◑</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-lastmo">—</div>
+              <div class="kpi-l">Last Month</div>
+              <div class="kpi-s" id="c-lastmo-sub">For comparison</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#ffb74d">
+            <div class="kpi-ico">△</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-mom">—</div>
+              <div class="kpi-l">vs Last Month</div>
+              <div class="kpi-s" id="c-mom-sub">Month-over-month</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget progress -->
+        <div id="cost-budget-bar-wrap" style="display:none;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--t2);font-weight:500">Monthly Budget: <span id="cost-budget-total" style="color:var(--fg)">—</span></span>
+            <span id="cost-budget-status" style="font-size:11px;font-weight:600"></span>
+          </div>
+          <div style="background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+            <div id="cost-budget-fill" style="height:100%;border-radius:4px;transition:width 0.5s ease;width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:5px">
+            <span>Spent: <span id="cost-budget-forecast-lbl" style="font-weight:500"></span></span>
+            <span id="cost-budget-remaining-lbl"></span>
+          </div>
+        </div>
+
+        <!-- Spend spike alert -->
+        <div id="cost-spike-alert" style="display:none;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--crit)"></div>
+
+        <!-- Service breakdown + daily trend -->
+        <div class="row2">
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Cost by Service (MTD)</span></div>
+            <div class="addon-box compact">
+              <div class="cost-bars" id="cost-bars-mtd">
+                <div class="tr-load">Loading service breakdown…</div>
+              </div>
+              <div id="cost-svc-drill-mtd" style="display:none;margin-top:4px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Daily Spend (last 30 days)</span></div>
+            <div class="addon-box compact">
+              <div id="daily-spark" style="height:160px;padding:4px 0"></div>
+              <div style="font-size:10px;color:var(--t3);margin-top:4px;display:flex;align-items:center;gap:12px">
+                <span>🟦 Normal</span><span>🟨 Above avg</span><span>🟥 Spike (1.5× avg)</span>
+                <span style="margin-left:4px;display:flex;align-items:center;gap:4px">
+                  <svg width="20" height="8" style="vertical-align:middle"><path d="M0,7 C5,1 15,1 20,7" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/></svg> Trend
+                </span>
+              </div>
+              <div id="daily-stats" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: YTD ── -->
+      <div id="fin-tab-ytd" class="fin-pane">
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+          <div class="kpi" style="--a:#ce93d8">
+            <div class="kpi-ico">◈</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-ytd">—</div>
+              <div class="kpi-l">Year to Date</div>
+              <div class="kpi-s" id="c-ytd-sub">Jan – present</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#4fc3f7">
+            <div class="kpi-ico">◎</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-ytd-mo-avg">—</div>
+              <div class="kpi-l">Monthly Average</div>
+              <div class="kpi-s">YTD ÷ months elapsed</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#81c784">
+            <div class="kpi-ico">◑</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-ytd-proj">—</div>
+              <div class="kpi-l">Full Year Projection</div>
+              <div class="kpi-s">At current monthly rate</div>
+            </div>
+          </div>
+          <div class="kpi" style="--a:#ffb74d" title="Calculated using linear regression on the last 12 completed months of AWS Cost and Usage Report data. Updated automatically each day as new spend data arrives. Projections assume current infrastructure and usage patterns continue — they do not account for planned changes, new projects, or one-off costs.">
+            <div class="kpi-ico">◈</div>
+            <div class="kpi-body">
+              <div class="kpi-v" id="c-next12-forecast">—</div>
+              <div class="kpi-l">Next 12-Month Forecast <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1px solid currentColor;font-size:9px;opacity:0.55;cursor:default;vertical-align:middle" title="Calculated using linear regression on the last 12 completed months of AWS Cost and Usage Report data. Updated automatically each day as new spend data arrives. Projections assume current infrastructure and usage patterns continue — they do not account for planned changes, new projects, or one-off costs.">i</span></div>
+              <div class="kpi-s" id="c-next12-forecast-sub">Trend-based projection</div>
+              <div style="font-size:9px;opacity:0.45;margin-top:3px;font-style:italic">Refreshes daily · assumes stable infrastructure</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">YTD Cost by Service</span></div>
+            <div class="addon-box compact">
+              <div class="cost-bars" id="cost-bars-ytd">
+                <div class="tr-load">Loading…</div>
+              </div>
+              <div id="cost-svc-drill-ytd" style="display:none;margin-top:4px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><span class="card-title">Monthly Breakdown (YTD)</span></div>
+            <div class="addon-box compact">
+              <div id="ytd-monthly-bars" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: 12-MONTH HISTORY ── -->
+      <div id="fin-tab-history" class="fin-pane">
+
+        <!-- Summary strip -->
+        <div class="hist-summary" id="hist-summary">
+          <div class="hs-card" id="hs-trend">
+            <div class="hs-icon">◈</div>
+            <div class="hs-body">
+              <div class="hs-val" id="hs-trend-val">—</div>
+              <div class="hs-lbl">12-Month Trend</div>
+              <div class="hs-sub" id="hs-trend-sub">—</div>
+            </div>
+          </div>
+          <div class="hs-card">
+            <div class="hs-icon" style="color:var(--ok)">↓</div>
+            <div class="hs-body">
+              <div class="hs-val ok" id="hs-best-val">—</div>
+              <div class="hs-lbl">Best Month</div>
+              <div class="hs-sub" id="hs-best-sub">Lowest spend</div>
+            </div>
+          </div>
+          <div class="hs-card">
+            <div class="hs-icon" style="color:var(--crit)">↑</div>
+            <div class="hs-body">
+              <div class="hs-val crit" id="hs-worst-val">—</div>
+              <div class="hs-lbl">Worst Month</div>
+              <div class="hs-sub" id="hs-worst-sub">Highest spend</div>
+            </div>
+          </div>
+          <div class="hs-card">
+            <div class="hs-icon" style="color:var(--info)">◐</div>
+            <div class="hs-body">
+              <div class="hs-val" id="hs-avg-val">—</div>
+              <div class="hs-lbl">Monthly Average</div>
+              <div class="hs-sub">12-month mean</div>
+            </div>
+          </div>
+          <div class="hs-card">
+            <div class="hs-icon" style="color:var(--ok)">★</div>
+            <div class="hs-body">
+              <div class="hs-val ok" id="hs-saved-val">—</div>
+              <div class="hs-lbl">Total Saved</div>
+              <div class="hs-sub" id="hs-saved-sub">vs worst month × 12</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Monthly Spend + Savings &amp; Losses</span>
+            <span class="tag" id="hist-avg-tag">—</span>
+            <button onclick="_exportCostHistoryXLSX()"
+                    title="Export to Excel"
+                    style="margin-left:auto;display:flex;align-items:center;gap:5px;
+                           padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,0.12);
+                           background:rgba(255,255,255,0.04);color:var(--fg);font-size:12px;
+                           cursor:pointer;transition:background 0.15s"
+                    onmouseover="this.style.background='rgba(255,255,255,0.09)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export Excel
+            </button>
+          </div>
+          <div style="padding:16px 18px">
+
+            <!-- Waterfall bar chart -->
+            <div style="display:flex;align-items:flex-end;gap:5px;height:160px;margin-bottom:6px" id="hist-bars"></div>
+            <div style="display:flex;gap:5px;margin-bottom:6px" id="hist-labels"></div>
+
+            <!-- Delta legend -->
+            <div style="display:flex;gap:20px;font-size:11px;color:var(--t3);margin-bottom:20px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.05)">
+              <span><span style="display:inline-block;width:10px;height:10px;background:var(--ok);border-radius:2px;margin-right:4px"></span>Spend decreased (saved)</span>
+              <span><span style="display:inline-block;width:10px;height:10px;background:var(--crit);border-radius:2px;margin-right:4px"></span>Spend increased (loss)</span>
+              <span><span style="display:inline-block;width:10px;height:10px;background:var(--warn);border-radius:2px;margin-right:4px"></span>Current month (partial)</span>
+              <span><span style="display:inline-block;width:10px;height:10px;background:var(--t3);border-radius:2px;margin-right:4px"></span>No prior data</span>
+            </div>
+
+            <!-- Detail table -->
+            <div class="tscroll">
+              <table class="dt">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Spend</th>
+                    <th>vs Prior Month</th>
+                    <th>$ Change</th>
+                    <th>Daily Avg</th>
+                    <th>Signal</th>
+                  </tr>
+                </thead>
+                <tbody id="hist-tbody"></tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: BY ACCOUNT ── -->
+      <div id="fin-tab-accounts" class="fin-pane">
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">MTD Cost by AWS Account</span>
+            <span class="tag" id="acct-count-tag">—</span>
+          </div>
+          <div id="acct-breakdown-inner">
+            <div class="tr-load">Loading account data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: BY RESOURCE ── -->
+      <div id="fin-tab-resources" class="fin-pane">
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Resources by Monthly Cost</span>
+            <span class="tag" id="resource-count-tag">—</span>
+          </div>
+          <div id="resource-month-picker" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div id="resource-breakdown-inner">
+            <div class="tr-load">Loading resource data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: BY INSTANCE ── -->
+      <div id="fin-tab-instance" class="fin-pane">
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Total Cost by Instance</span>
+            <span class="tag" id="instance-count-tag">—</span>
+          </div>
+          <div id="instance-month-picker" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div id="instance-breakdown-inner">
+            <div class="tr-load">Loading instance data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: BY APPLICATION ── -->
+      <div id="fin-tab-application" class="fin-pane">
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Cost by Application</span>
+            <span class="tag" id="app-count-tag">—</span>
+            <button class="btn-sm" style="margin-left:auto" onclick="_exportAppExcel()">Export Excel</button>
+          </div>
+          <div id="app-month-picker" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px"></div>
+          <div id="app-breakdown-inner">
+            <div class="tr-load">Loading application data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: COST DRIVERS ── -->
+      <div id="fin-tab-drivers" class="fin-pane">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-hdr"><span class="card-title">Monthly Cost Impact</span></div>
+          <div style="display:flex;gap:12px;margin-bottom:10px;font-size:11px;color:var(--t3)">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--ok);margin-right:4px;vertical-align:middle"></span>New resources</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--crit);margin-right:4px;vertical-align:middle"></span>Removed</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--warn);margin-right:4px;vertical-align:middle"></span>Changed</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(255,255,255,0.6);margin-right:4px;vertical-align:middle"></span>Net delta</span>
+          </div>
+          <div id="drivers-trend-chart" style="height:120px;position:relative"></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">
+            <span class="card-title">Cost Drivers</span>
+            <span class="tag" id="drivers-count-tag">—</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+            <div id="drivers-month-picker" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+            <div style="margin-left:auto;display:flex;gap:6px">
+              <button class="driver-filter active" id="df-all"      onclick="_filterDrivers('all',this)">All</button>
+              <button class="driver-filter"        id="df-new"      onclick="_filterDrivers('new',this)">New</button>
+              <button class="driver-filter"        id="df-removed"  onclick="_filterDrivers('removed',this)">Removed</button>
+              <button class="driver-filter"        id="df-changed"  onclick="_filterDrivers('changed',this)">Changed</button>
+            </div>
+          </div>
+          <div id="drivers-inner">
+            <div class="tr-load">Loading cost driver data…</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── SAVINGS ───────────────────────────────── -->
+    <section id="s-savings" class="ds">
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">Rightsizing &amp; Savings Opportunities</span>
+          <span class="tag info" id="savings-tag">—</span>
+        </div>
+        <div id="savings-list-inner">
+          <div class="tr-load">Analysing usage patterns…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── DEPLOYMENTS ───────────────────────────── -->
+    <section id="s-deployments" class="ds">
+      <div class="card"><div class="card-hdr"><span class="card-title">Deploy History</span><span class="tag info">Connect CodeDeploy / ArgoCD</span></div>
+        <div class="tscroll"><table class="dt"><thead><tr><th>Service</th><th>Version</th><th>Environment</th><th>Deployed By</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>api-service</td><td class="mono">v2.14.1</td><td><span class="env-tag prod">prod</span></td><td class="muted">CI/CD</td><td class="muted">2h ago</td><td><span class="badge ok">success</span></td></tr>
+          <tr><td>auth-service</td><td class="mono">v1.8.0</td><td><span class="env-tag prod">prod</span></td><td class="muted">CI/CD</td><td class="muted">5h ago</td><td><span class="badge ok">success</span></td></tr>
+          <tr><td>worker</td><td class="mono">v3.2.0</td><td><span class="env-tag staging">staging</span></td><td class="muted">jdoe</td><td class="muted">1d ago</td><td><span class="badge warn">partial</span></td></tr>
+          <tr><td colspan="6" class="tr-load" style="font-size:11px">Create <code>backend/collectors/deployments.py</code> for live CodeDeploy / ArgoCD / GitHub Actions data.</td></tr>
+        </tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ── CAPACITY ──────────────────────────────── -->
+    <section id="s-capacity" class="ds">
+      <div class="row2">
+        <div class="card"><div class="card-hdr"><span class="card-title">EC2 Fleet Utilization</span></div><div class="cap-list" id="cap-ec2"><div class="tr-load">Loading…</div></div></div>
+        <div class="card"><div class="card-hdr"><span class="card-title">EKS Capacity</span></div><div class="cap-list" id="cap-eks"><div class="tr-load">Loading…</div></div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="card-hdr"><span class="card-title">Recommendations</span></div>
+        <div class="cap-recs">
+          <div class="cr warn"><span class="cr-ico">▲</span><div><strong>Scale-out recommended:</strong> EKS node-grp-1b at 62% CPU — add 1 node before peak hours.</div></div>
+          <div class="cr ok"><span class="cr-ico">✓</span><div><strong>EC2 fleet healthy:</strong> Avg utilization 46%. No immediate scaling action needed.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── APP PERFORMANCE (CHT Sync) ───────────────── -->
+    <section id="s-appperf" class="ds">
+
+      <!-- Sync status -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">CHW Sync Status</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="ap-sync-month" onchange="loadSyncStatus(this.value)" style="font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--t1);cursor:pointer"></select>
+            <span class="muted" id="ap-sync-period" style="font-size:11px"></span>
+          </div>
+        </div>
+        <div class="tscroll">
+          <table class="dt" id="ap-sync-unified-table">
+            <thead><tr>
+              <th>Region</th>
+              <th style="text-align:right">CHWs</th>
+              <th style="text-align:right">Supervisors</th>
+              <th style="text-align:right">Synced</th>
+              <th style="text-align:right">No Sync</th>
+              <th style="text-align:right">CHW-Days</th>
+              <th style="text-align:right">Succ Days</th>
+              <th style="text-align:right">Day %</th>
+            </tr></thead>
+            <tbody id="ap-sync-unified-body"><tr><td colspan="8" class="tr-load">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CHW-Day Sync Rate Trend -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-hdr">
+          <span class="card-title">CHW-Day Sync Rate — Monthly Trend</span>
+          <span class="muted" style="font-size:11px">% of CHW-days with ≥1 successful sync</span>
+        </div>
+        <div id="ap-sync-chart" style="position:relative;min-height:320px;padding:4px 0"></div>
+      </div>
+
+    </section>
+
+    <!-- ── INSTANCE CONTROL ─────────────────────────── -->
+    <section id="s-instances" class="ds">
+
+      <!-- Stats bar -->
+      <div class="pod-overview" id="inst-stats">
+        <div class="po-stat"><div class="po-v muted" id="inst-stat-total">—</div><div class="po-l">Total Instances</div></div>
+        <div class="po-stat"><div class="po-v ok"    id="inst-stat-running">—</div><div class="po-l">Running</div></div>
+        <div class="po-stat"><div class="po-v muted" id="inst-stat-stopped">—</div><div class="po-l">Stopped</div></div>
+        <div class="po-stat"><div class="po-v muted" id="inst-stat-other">—</div><div class="po-l">Transitioning</div></div>
+        <div style="margin-left:auto;display:flex;align-items:center">
+          <button class="btn-sm" onclick="loadInstances()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Instance cards -->
+      <div id="inst-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:16px">
+        <div class="card" style="padding:32px;text-align:center;color:var(--t3);font-size:13px">Loading instances…</div>
+      </div>
+
+      <!-- Confirmation modal -->
+      <div id="inst-confirm-overlay" onclick="closeInstConfirm()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1001;align-items:center;justify-content:center">
+        <div onclick="event.stopPropagation()" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:28px;max-width:420px;width:90%;position:relative">
+          <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--t1)" id="inst-confirm-title">Confirm</div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:24px;line-height:1.5" id="inst-confirm-body"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn-sm muted" onclick="closeInstConfirm()">Cancel</button>
+            <button class="btn-sm" id="inst-confirm-ok" style="font-weight:500">Confirm</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── NGSA FHIR ─────────────────────────────────── -->
+    <section id="s-ngsa" class="ds">
+
+      <!-- KPI row -->
+      <div class="pod-overview" style="margin-bottom:16px">
+        <div class="po-stat"><div class="po-v" id="ngsa-kpi-status">—</div><div class="po-l">Gateway Status</div></div>
+        <div class="po-stat"><div class="po-v muted" id="ngsa-kpi-token-ms">—</div><div class="po-l">Token Latency</div></div>
+        <div class="po-stat"><div class="po-v muted" id="ngsa-kpi-fhir-ms">—</div><div class="po-l">FHIR Latency</div></div>
+        <div class="po-stat"><div class="po-v muted" id="ngsa-kpi-checked">—</div><div class="po-l">Last Checked</div></div>
+      </div>
+
+      <!-- Health card -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">NGSA FHIR Gateway</span>
+          <span id="ngsa-overall-badge" style="font-size:11px;padding:3px 10px;border-radius:10px;font-weight:600">—</span>
+        </div>
+        <div id="ngsa-checks" style="padding:4px 0">
+          <div style="padding:24px;color:var(--t3);font-size:12px;text-align:center">Loading…</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── ADMIN ─────────────────────────────────────── -->
+    <section id="s-admin" class="ds">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+        <div class="kpi" style="--a:#ffb74d"><div class="kpi-ico">⏳</div><div class="kpi-v" id="admin-pending-count">—</div><div class="kpi-l">Pending Approvals</div><div class="kpi-s">Awaiting review</div></div>
+        <div class="kpi" style="--a:#4ade80"><div class="kpi-ico">◧</div><div class="kpi-v" id="admin-user-count">—</div><div class="kpi-l">Active Users</div><div class="kpi-s">Approved accounts</div></div>
+        <div class="kpi" style="--a:#4fc3f7"><div class="kpi-ico">★</div><div class="kpi-v" id="admin-admin-count">—</div><div class="kpi-l">Admins</div><div class="kpi-s">Full access</div></div>
+      </div>
+
+      <!-- Pending requests -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr">
+          <span class="card-title">Pending Access Requests</span>
+          <button onclick="loadAdminData()" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--t2);cursor:pointer">↻ Refresh</button>
+        </div>
+        <div id="admin-pending-list" style="padding:8px 0">
+          <div class="tr-load">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Active users -->
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Active Users</span></div>
+        <div class="tscroll">
+          <table class="dt">
+            <thead><tr>
+              <th>Name</th><th>Email</th><th>Role</th>
+              <th>Approved By</th><th>Last Login</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="admin-users-tbody">
+              <tr><td colspan="6" class="tr-load">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ── NODE DETAIL MODAL ─────────────────────── -->
+<div id="ns-modal-overlay" class="ns-modal-overlay" onclick="closeNsModal(event)">
+  <div class="ns-modal" id="ns-modal">
+    <div class="ns-modal-hdr">
+      <div>
+        <div class="ns-modal-title" id="ns-modal-title">Node</div>
+        <div class="ns-modal-meta" id="ns-modal-meta"></div>
+      </div>
+      <button class="ns-modal-close" onclick="closeNsModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="ns-modal-stats" id="ns-modal-stats"></div>
+    <div class="ns-modal-body" id="ns-modal-body">
+      <div class="tr-load">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script src="./demo-intercept.js"></script>
+<script src="./xlsx.bundle.js"></script>
+<script src="./dashboard.js"></script>
+<script>
+  // Override post-load: disable actions that require a live backend
+  window.addEventListener('load', () => {
+    window.doLogout = () => alert('Sign out is not available in demo mode.');
+    window.downloadMonthlyReport = () => alert('Monthly report generation requires a live backend connection.');
+  });
+</script>
+
+<!-- ── Quarterly Report Modal ────────────────────────── -->
+<div id="qt-modal-overlay" class="ns-modal-overlay" onclick="closeQuarterlyReport(event)">
+  <div class="ns-modal" style="max-width:960px">
+    <div class="ns-modal-hdr">
+      <div>
+        <div class="ns-modal-title" id="qt-modal-title">Quarterly Uptime Report</div>
+        <div class="ns-modal-sub"  id="qt-modal-sub">—</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-sm" onclick="exportReport()" style="background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.3);color:#4ade80">↓ Export to Excel</button>
+        <button class="ns-modal-close" onclick="closeQuarterlyReport(null)">✕</button>
+      </div>
+    </div>
+    <div class="ns-modal-body" style="padding:0">
+      <div class="tscroll">
+        <table class="dt">
+          <thead><tr>
+            <th>Service</th><th>URL</th><th>Uptime %</th>
+            <th>Total Checks</th><th>Incidents</th><th>Downtime (hrs)</th><th>Current Status</th>
+          </tr></thead>
+          <tbody id="qt-modal-tbody"><tr><td colspan="7" class="tr-load">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Volume Snapshot Modal ─────────────────────────── -->
+<div id="vol-modal-overlay" class="ns-modal-overlay" onclick="closeVolModal(event)">
+  <div class="ns-modal" id="vol-modal" style="max-width:780px">
+    <div class="ns-modal-hdr">
+      <div>
+        <div class="ns-modal-title" id="vol-modal-title">Volume</div>
+        <div class="ns-modal-sub"  id="vol-modal-sub">Snapshot history</div>
+      </div>
+      <button class="ns-modal-close" onclick="closeVolModal(null)">✕</button>
+    </div>
+    <!-- Volume detail stats -->
+    <div class="ns-modal-stats" id="vol-modal-stats"></div>
+    <!-- Snapshot table -->
+    <div class="ns-modal-body" id="vol-modal-body"></div>
+  </div>
+</div>
+
+<!-- ── S3 Bucket Detail Modal ─────────────────────────── -->
+<div id="s3-modal-overlay" class="ns-modal-overlay" onclick="closeS3Modal(event)">
+  <div class="ns-modal" id="s3-modal" style="max-width:680px">
+    <div class="ns-modal-hdr">
+      <div>
+        <div class="ns-modal-title" id="s3-modal-title">Bucket</div>
+        <div class="ns-modal-sub"  id="s3-modal-sub"></div>
+      </div>
+      <button class="ns-modal-close" onclick="closeS3Modal(null)">✕</button>
+    </div>
+    <div class="ns-modal-stats" id="s3-modal-stats"></div>
+    <div class="ns-modal-body"  id="s3-modal-body"></div>
+  </div>
+</div>
+
+<!-- ── EC2 Instance Detail Modal ─────────────────────── -->
+<div id="ec2-modal-overlay" class="ns-modal-overlay" onclick="closeEC2Modal(event)" style="display:none">
+  <div class="ns-modal" style="max-width:720px">
+    <div class="ns-modal-hdr">
+      <div>
+        <div class="ns-modal-title" id="ec2-modal-title">Instance</div>
+        <div class="ns-modal-meta" id="ec2-modal-meta"></div>
+      </div>
+      <button class="ns-modal-close" onclick="closeEC2Modal(null)">✕</button>
+    </div>
+    <div class="ns-modal-body" id="ec2-modal-body"></div>
+  </div>
+</div>
+</body>
+</html>
