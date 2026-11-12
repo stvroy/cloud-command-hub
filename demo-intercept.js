@@ -316,7 +316,75 @@
   };
 
   /* ── Security ── */
-  MOCK.metrics.guardduty = { findings: [], total: 0, high: 0, medium: 0, low: 0 };
+  MOCK.metrics.guardduty = {
+    security_score: 71,
+    total: 7, high: 2, medium: 3, low: 2,
+    findings: [
+      {
+        title:         'SSH Brute Force Attack on EC2 Instance',
+        type:          'UnauthorizedAccess:EC2/SSHBruteForce',
+        resource_type: 'EC2 Instance',
+        resource_id:   'i-0a1b2c3d4e5f67890',
+        severity:      8.2,
+        severity_label:'HIGH',
+        severity_css:  'crit',
+      },
+      {
+        title:         'Cryptocurrency Mining Activity Detected',
+        type:          'CryptoCurrency:EC2/BitcoinTool.B',
+        resource_type: 'EC2 Instance',
+        resource_id:   'i-0f9e8d7c6b5a43210',
+        severity:      7.5,
+        severity_label:'HIGH',
+        severity_css:  'crit',
+      },
+      {
+        title:         'Unusual Console Login from Anomalous Location',
+        type:          'UnauthorizedAccess:IAMUser/ConsoleLogin',
+        resource_type: 'IAM User',
+        resource_id:   'legacy-svc-account',
+        severity:      6.1,
+        severity_label:'MEDIUM',
+        severity_css:  'warn',
+      },
+      {
+        title:         'Port Probe on Unprotected EC2 Instance',
+        type:          'Recon:EC2/PortProbeUnprotectedPort',
+        resource_type: 'EC2 Instance',
+        resource_id:   'i-0b2c3d4e5f6a78901',
+        severity:      5.0,
+        severity_label:'MEDIUM',
+        severity_css:  'warn',
+      },
+      {
+        title:         'S3 Bucket Made Publicly Accessible',
+        type:          'Policy:S3/BucketPublicAccessGranted',
+        resource_type: 'S3 Bucket',
+        resource_id:   'stg-assets-public',
+        severity:      4.4,
+        severity_label:'MEDIUM',
+        severity_css:  'warn',
+      },
+      {
+        title:         'API Calls from Known Malicious IP',
+        type:          'Recon:IAMUser/MaliciousIPCaller.Custom',
+        resource_type: 'IAM User',
+        resource_id:   'ci-runner',
+        severity:      2.8,
+        severity_label:'LOW',
+        severity_css:  'ok',
+      },
+      {
+        title:         'Unencrypted Data Transfer Detected',
+        type:          'Policy:EC2/NoPasswordPolicy',
+        resource_type: 'EC2 Instance',
+        resource_id:   'i-0c3d4e5f6a7b89012',
+        severity:      1.9,
+        severity_label:'LOW',
+        severity_css:  'ok',
+      },
+    ],
+  };
 
   MOCK.metrics.security = {
     security_groups: [
@@ -476,46 +544,67 @@
 
   /* ── Log samples ── */
   const _logEntries = [
-    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2', msg:'GET /api/v2/users 200 OK [42ms] — 847 results returned' },
-    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'prometheus-0',             msg:'Scrape completed: 1,247 metrics ingested from 14 targets in 234ms' },
-    { sev:'error',   src:'eks-pods',    ns:'kube-system',   pod:'coredns-7d6b4b5c9f-xt9zq',msg:'ERROR failed to load Corefile: unknown directive "erros" on line 7 — CrashLoopBackOff' },
-    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'CloudTrail: s.roy assumed role arn:aws:iam::123456789012:role/AdminRole from 196.218.x.x' },
-    { sev:'info',    src:'eks-pods',    ns:'ingress-nginx', pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', msg:'Configuration reloaded — 12 Ingress rules active' },
-    { sev:'warning', src:'syslog',      ns:'default',       pod:'prod-worker-01',           msg:'WARNING: celery-worker memory usage at 78% (489 MB / 629 MB) — approaching limit' },
-    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'User s.roy authenticated via SSO (Google) — session granted for 8h' },
-    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2', msg:'Liveness probe OK: /health returned 200 in 3ms' },
-    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'S3 PutObject: prod-backups — daily snapshot uploaded (2.3 GB) by backup-agent' },
-    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'loki-0',                   msg:'Log retention policy applied: 847,231 entries older than 30d compacted to object storage' },
-    { sev:'error',   src:'eks-pods',    ns:'default',       pod:'stg-postgres-proxy-7f6b',  msg:'ERROR pgbouncer connection pool exhausted — max_client_conn=20 reached (exit 1)' },
-    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'EC2 DescribeInstances called by ci-runner from us-east-1 — 14 instances returned' },
-    { sev:'info',    src:'syslog',      ns:'default',       pod:'prod-web-01',              msg:'TLS certificate renewed for api.example.com — expires in 85 days' },
-    { sev:'warning', src:'cloudtrail',  ns:null,            pod:null,                       msg:'WARNING: IAM key age threshold exceeded for legacy-svc (127 days since last rotation)' },
-    { sev:'info',    src:'eks-pods',    ns:'monitoring',    pod:'grafana-7d4b9c8f6-p2qkj',  msg:'Dashboard "Infrastructure Overview" viewed by s.roy — 847 panel queries executed' },
-    { sev:'info',    src:'syslog',      ns:null,            pod:'prod-db-replica',          msg:'PostgreSQL streaming replication lag: 0.3s — WAL receiver connected to primary' },
-    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'API key ci-runner rotated successfully — new key stored in Secrets Manager' },
-    { sev:'info',    src:'eks-pods',    ns:'kube-system',   pod:'aws-node-tx9qz',           msg:'VPC CNI plugin: assigned 3 secondary IPs to node ip-10-0-1-100.ec2.internal' },
-    { sev:'warning', src:'syslog',      ns:'default',       pod:'prod-api-01',              msg:'WARNING: upstream response time exceeded 1s threshold — p99 latency 1,247ms (target: 500ms)' },
-    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'CloudWatch alarm OK: prod-worker-01 CPUUtilization returned below threshold (67% < 80%)' },
-    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-pq7x1',  msg:'Deployment rollout complete: api-deploy updated to v2.4.1 (3/3 replicas ready)' },
-    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'alertmanager-0',           msg:'Alert resolved: FilesServiceDown — service restored after 47 minutes' },
-    { sev:'info',    src:'cloudtrail',  ns:null,            pod:null,                       msg:'Cost Anomaly Detection: EC2 spend within normal range ($268/day, budget $300/day)' },
-    { sev:'error',   src:'syslog',      ns:'default',       pod:'stg-api-01',               msg:'ERROR upstream connect timeout: postgres-proxy connection refused (port 5432)' },
-    { sev:'info',    src:'auth',        ns:null,            pod:null,                       msg:'Admin panel: s.roy approved access request for stg-dev (read-only, 7-day expiry)' },
-    { sev:'info',    src:'eks-pods',    ns:'ingress-nginx', pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', msg:'Rate limit triggered: 429 returned to 54.203.x.x — 1,000 req/min exceeded' },
-    { sev:'info',    src:'syslog',      ns:null,            pod:'prod-eks-node-01',         msg:'Node heartbeat OK — kubelet reporting healthy, 25 pods scheduled, 0 evictions' },
-    { sev:'warning', src:'cloudtrail',  ns:null,            pod:null,                       msg:'WARNING: S3 bucket public-assets has public read ACL — review recommended' },
-    { sev:'info',    src:'eks-pods',    ns:'default',       pod:'api-deploy-6c8f9d-k9xm2',  msg:'POST /api/v2/reports 202 Accepted — PPTX generation queued (job_id: rpt-2847)' },
-    { sev:'info',    src:'syslog',      ns:'monitoring',    pod:'prometheus-0',             msg:'TSDB compaction complete: 2.3M series retained, 847K expired entries removed' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'api-deploy-6c8f9d-k9xm2',              line:'GET /api/v2/users 200 OK [42ms] — 847 results returned' },
+    { sev:'info',     job:'syslog',      ns:'monitoring',        pod:'prometheus-0',                         line:'Scrape completed: 1,247 metrics ingested from 14 targets in 234ms' },
+    { sev:'critical', job:'eks-pods',    ns:'kube-system',       pod:'coredns-7d6b4b5c9f-xt9zq',            line:'failed to load Corefile: unknown directive "erros" on line 7 — CrashLoopBackOff' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'iam-service',                          line:'s.roy assumed role arn:aws:iam::123456789012:role/AdminRole from 196.218.x.x' },
+    { sev:'info',     job:'eks-pods',    ns:'ingress-nginx',     pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', line:'Configuration reloaded — 12 Ingress rules active' },
+    { sev:'warning',  job:'syslog',      ns:'default',           pod:'prod-worker-01',                       line:'celery-worker memory usage at 78% (489 MB / 629 MB) — approaching limit' },
+    { sev:'info',     job:'auth',        ns:'default',           pod:'auth-service',                         line:'User s.roy authenticated via SSO (Google) — session granted for 8h' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'api-deploy-6c8f9d-k9xm2',              line:'Liveness probe OK: /health returned 200 in 3ms' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'s3-service',                           line:'S3 PutObject: prod-backups — daily snapshot uploaded (2.3 GB) by backup-agent' },
+    { sev:'info',     job:'syslog',      ns:'monitoring',        pod:'loki-0',                               line:'Log retention policy applied: 847,231 entries older than 30d compacted to object storage' },
+    { sev:'critical', job:'eks-pods',    ns:'default',           pod:'stg-postgres-proxy-7f6b',              line:'pgbouncer connection pool exhausted — max_client_conn=20 reached (exit 1)' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'ec2-service',                          line:'EC2 DescribeInstances called by ci-runner from us-east-1 — 14 instances returned' },
+    { sev:'info',     job:'syslog',      ns:'default',           pod:'prod-web-01',                          line:'TLS certificate renewed for api.prod.internal — expires in 85 days' },
+    { sev:'warning',  job:'cloudtrail',  ns:'aws',               pod:'iam-service',                          line:'IAM key age threshold exceeded for legacy-svc (127 days since last rotation)' },
+    { sev:'info',     job:'eks-pods',    ns:'monitoring',        pod:'grafana-7d4b9c8f6-p2qkj',              line:'Dashboard "Infrastructure Overview" viewed by s.roy — 847 panel queries executed' },
+    { sev:'info',     job:'syslog',      ns:'default',           pod:'prod-db-replica',                      line:'PostgreSQL streaming replication lag: 0.3s — WAL receiver connected to primary' },
+    { sev:'info',     job:'auth',        ns:'default',           pod:'auth-service',                         line:'API key ci-runner rotated successfully — new key stored in Secrets Manager' },
+    { sev:'info',     job:'eks-pods',    ns:'kube-system',       pod:'aws-node-tx9qz',                       line:'VPC CNI plugin: assigned 3 secondary IPs to node ip-10-0-1-100.ec2.internal' },
+    { sev:'warning',  job:'syslog',      ns:'default',           pod:'prod-api-01',                          line:'upstream response time exceeded threshold — p99 latency 1,247ms (target: 500ms)' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'cloudwatch',                           line:'CloudWatch alarm OK: prod-worker-01 CPUUtilization returned below 80% (now 67%)' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'api-deploy-6c8f9d-pq7x1',              line:'Deployment rollout complete: api-deploy updated to v2.4.1 (3/3 replicas ready)' },
+    { sev:'info',     job:'syslog',      ns:'monitoring',        pod:'alertmanager-0',                       line:'Alert resolved: FilesServiceDown — service restored after 47 minutes' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'cost-explorer',                        line:'Cost Anomaly Detection: EC2 spend within normal range ($268/day, budget $300/day)' },
+    { sev:'critical', job:'syslog',      ns:'default',           pod:'stg-api-01',                           line:'upstream connect timeout: postgres-proxy connection refused (port 5432)' },
+    { sev:'info',     job:'auth',        ns:'default',           pod:'auth-service',                         line:'Admin panel: s.roy approved access request for stg-dev (read-only, 7-day expiry)' },
+    { sev:'warning',  job:'eks-pods',    ns:'ingress-nginx',     pod:'ingress-nginx-controller-5f8b8d4c6-zqp7n', line:'Rate limit triggered: 429 returned to 54.203.x.x — 1,000 req/min exceeded' },
+    { sev:'info',     job:'syslog',      ns:'default',           pod:'prod-eks-node-01',                     line:'Node heartbeat OK — kubelet reporting healthy, 25 pods scheduled, 0 evictions' },
+    { sev:'warning',  job:'cloudtrail',  ns:'aws',               pod:'s3-service',                           line:'S3 bucket public-assets has public read ACL — review recommended' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'api-deploy-6c8f9d-k9xm2',              line:'POST /api/v2/reports 202 Accepted — async job queued (job_id: rpt-2847)' },
+    { sev:'info',     job:'syslog',      ns:'monitoring',        pod:'prometheus-0',                         line:'TSDB compaction complete: 2.3M series retained, 847K expired entries removed' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'worker-deploy-8b7c4f-mnp3r',            line:'Celery task completed: generate_report [SUCCESS] runtime=4.2s, retries=0' },
+    { sev:'warning',  job:'syslog',      ns:'default',           pod:'prod-db-primary',                      line:'Checkpoint taking longer than expected: 18.4s (threshold 10s) — consider tuning checkpoint_completion_target' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'iam-service',                          line:'MFA challenge passed: s.roy — console login granted (us-east-1)' },
+    { sev:'info',     job:'eks-pods',    ns:'default',           pod:'api-deploy-6c8f9d-k9xm2',              line:'Cache hit rate: 94.2% — Redis latency p50=0.8ms, p99=3.1ms' },
+    { sev:'info',     job:'syslog',      ns:'kube-system',       pod:'cluster-autoscaler-6d9b5-wq4rt',       line:'Scale-up: adding node to group prod-workers (pending pods: 3, current: 5, target: 6)' },
+    { sev:'critical', job:'eks-pods',    ns:'default',           pod:'payments-svc-5c8d9f-bk2lt',            line:'Stripe webhook delivery failed — 503 from upstream after 3 retries (order_id: ord-9182)' },
+    { sev:'info',     job:'cloudtrail',  ns:'aws',               pod:'rds-service',                          line:'RDS automated backup completed: prod-postgres-db — snapshot rds:prod-2024-11-12 (42 GB)' },
+    { sev:'warning',  job:'eks-pods',    ns:'default',           pod:'scheduler-deploy-3a7f1d-xr9vq',        line:'Job queue depth: 1,847 pending tasks — workers at capacity, consider horizontal scaling' },
+    { sev:'info',     job:'auth',        ns:'default',           pod:'auth-service',                         line:'Scheduled token rotation complete — 14 service accounts refreshed, 0 failures' },
+    { sev:'info',     job:'syslog',      ns:'monitoring',        pod:'loki-0',                               line:'Ingestion rate: 42 MB/s across 7 log streams — within configured limits' },
   ];
-  MOCK.logs = _logEntries.map((e, i) => ({
-    id: i,
-    ts: new Date(Date.now() - i * 95000).toISOString(),
-    severity: e.sev,
-    source: e.src,
-    namespace: e.ns || 'default',
-    pod: e.pod || `svc-${(i + 1).toString().padStart(4,'0')}`,
-    message: e.msg,
-  }));
+  const _logCritCount = _logEntries.filter(e => e.sev === 'critical').length;
+  const _logWarnCount = _logEntries.filter(e => e.sev === 'warning').length;
+  const _logSources   = [...new Set(_logEntries.map(e => e.job))];
+  MOCK.logs = {
+    configured: true,
+    lines: _logEntries.map((e, i) => ({
+      ts:        Date.now() - i * 110000,
+      severity:  e.sev,
+      job:       e.job,
+      namespace: e.ns,
+      pod:       e.pod,
+      line:      e.line,
+    })),
+    stats: {
+      total:    _logEntries.length,
+      critical: _logCritCount,
+      warning:  _logWarnCount,
+      sources:  _logSources,
+    },
+  };
 
   /* ── FETCH INTERCEPTOR ───────────────────────────────────────────────── */
   window.fetch = function (url, options = {}) {
@@ -525,7 +614,7 @@
     if (path === '/auth/me')                return _mockResp(MOCK.user);
     if (path === '/auth/logout')            return _mockResp({ ok: true });
     if (path === '/api/metrics')            return _mockResp({ metrics: MOCK.metrics });
-    if (path.startsWith('/api/logs'))       return _mockResp({ logs: MOCK.logs, total: MOCK.logs.length });
+    if (path.startsWith('/api/logs'))       return _mockResp(MOCK.logs);
     if (path.startsWith('/api/incidents')) {
       const qs = (typeof url === 'string' ? url : url?.url || '').split('?')[1] || '';
       const status = new URLSearchParams(qs).get('status');

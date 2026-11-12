@@ -691,20 +691,19 @@
             </div>
           </div>
         </div>
-        <div class="card"><div class="card-hdr"><span class="card-title">GuardDuty Findings</span><span class="tag info">Addon</span></div>
-          <div class="addon-box compact"><div class="ab-title">Threat Detection Collector</div>
-            <div class="ab-desc">Create <code>backend/collectors/guardduty.py</code> using <code>boto3.client('guardduty')</code> to pull live threat findings.</div>
-            <div class="sec-mock">
-              <div class="sm-row"><span class="sev high">HIGH</span><span>Brute force SSH on i-0a1b2c3d</span><span class="muted">—</span></div>
-              <div class="sm-row"><span class="sev med">MED</span><span>Unusual API from unknown IP</span><span class="muted">—</span></div>
-              <div class="sm-row"><span class="sev low">LOW</span><span>Port scan on subnet</span><span class="muted">—</span></div>
-            </div>
+        <div class="card" style="margin-top:16px"><div class="card-hdr"><span class="card-title">Threat Summary</span></div>
+          <div class="pod-overview" style="padding:14px 16px">
+            <div class="po-stat"><div class="po-v crit" id="gd-high">—</div><div class="po-l">High</div></div>
+            <div class="po-stat"><div class="po-v warn" id="gd-med">—</div><div class="po-l">Medium</div></div>
+            <div class="po-stat"><div class="po-v ok"   id="gd-low">—</div><div class="po-l">Low</div></div>
+            <div class="po-stat"><div class="po-v muted" id="gd-total">—</div><div class="po-l">Total</div></div>
           </div>
+          <div id="gd-preview" style="padding:0 16px 14px"></div>
         </div>
       </div>
       <div class="card" style="margin-top:16px"><div class="card-hdr"><span class="card-title">GuardDuty Findings</span></div>
         <div class="tscroll"><table class="dt"><thead><tr><th>Finding</th><th>Resource Type</th><th>Resource</th><th>Finding Type</th><th>Severity</th></tr></thead>
-        <tbody id="sg-tbody"><tr><td colspan="5" class="tr-load">Enable SecurityCollector for live data.</td></tr></tbody></table></div>
+        <tbody id="sg-tbody"><tr><td colspan="5" class="tr-load">Loading…</td></tr></tbody></table></div>
       </div>
       <div class="card" style="margin-top:16px">
         <div class="card-hdr"><span class="card-title">Infrastructure Security</span></div>

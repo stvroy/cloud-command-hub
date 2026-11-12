@@ -4890,17 +4890,23 @@ function renderSecurity(gd, storage, iam) {
     }
   }
 
-  // Update the GuardDuty summary card on the left
-  const secMock = document.querySelector('.sec-mock');
-  if (secMock) {
+  // Threat summary counts
+  const setStat = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setStat('gd-high',  gd.high  ?? findings.filter(f => f.severity >= 7).length);
+  setStat('gd-med',   gd.medium ?? findings.filter(f => f.severity >= 4 && f.severity < 7).length);
+  setStat('gd-low',   gd.low   ?? findings.filter(f => f.severity < 4).length);
+  setStat('gd-total', gd.total ?? findings.length);
+
+  // Top-3 findings preview
+  const preview = document.getElementById('gd-preview');
+  if (preview) {
     if (!findings.length) {
-      secMock.innerHTML = '<div class="sm-row" style="color:var(--ok)">✓ No active findings detected</div>';
+      preview.innerHTML = '<div class="sm-row" style="color:var(--ok)">✓ No active findings detected</div>';
     } else {
-      secMock.innerHTML = findings.slice(0, 5).map(f => `
+      preview.innerHTML = findings.slice(0, 3).map(f => `
         <div class="sm-row">
           <span class="sev ${f.severity >= 7 ? 'high' : f.severity >= 4 ? 'med' : 'low'}">${f.severity_label}</span>
-          <span>${esc(f.title)}</span>
-          <span class="muted" style="font-size:11px">${esc(f.resource_id)}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.title)}</span>
         </div>`).join('');
     }
   }
